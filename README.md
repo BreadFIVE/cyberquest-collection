@@ -90,10 +90,6 @@ Then `npm run build` and write `tools/checks/<id>.js` so the test proves every p
 * The terminal lab is deliberately limited: scripted output only, no brute-forcing tools, nothing based on real vulnerabilities. For real hands-on practice point students at safe, legal platforms such as TryHackMe, picoCTF or OverTheWire (linked from the landing page).
 * Every puzzle needs one clear answer. Compute ciphertext, hashes and logs with code, and prove the route in the test.
 
-## Licence
-
-Add the licence of your choice (for example MIT for the code, CC BY for the content) before publishing.
-
 ## The simulated terminal (`engine/lab.js`)
 
 Three quests use it in different ways, all driven by data in the quest file (`lab: {tab, bar, intro, data:{local:{...}}}`):
