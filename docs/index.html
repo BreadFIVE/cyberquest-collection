@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CyberQuest – cyber challenge collection</title>
+<style>
+:root{--bg:#0a0e14;--panel:#111823;--line:#243044;--text:#d6e2f0;--dim:#7e8ea6;--green:#39ff88;--cyan:#38d6ff;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;background-image:radial-gradient(circle at 15% -10%,#12304a55,transparent 45%),radial-gradient(circle at 100% 0,#2a164a44,transparent 40%)}
+.w{max-width:960px;margin:0 auto;padding:0 16px}header{padding:48px 0 12px}
+.logo{font-family:var(--mono);font-weight:700;color:var(--green);font-size:30px;letter-spacing:.5px}.logo span{color:var(--dim);font-weight:400}
+.lead{color:var(--dim);max-width:62ch}h2{margin:34px 0 12px;font-size:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+a.q{display:flex;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;color:inherit;text-decoration:none;transition:.15s}
+a.q:hover{border-color:var(--cyan);transform:translateY(-2px)}a.q .i{font-size:30px}a.q h3{margin:0}a.q .s{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:1px;text-transform:uppercase;margin:2px 0 8px}
+a.q p{margin:0 0 8px;font-size:14.5px;color:var(--dim)}a.q .m{font-family:var(--mono);font-size:12px;color:var(--green)}
+ul{padding-left:20px;color:var(--dim)}li{margin:6px 0}a{color:var(--cyan)}
+.note{border-left:3px solid #ffc247;background:#ffc2470f;padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px;margin:24px 0}
+footer{color:var(--dim);font-size:12px;padding:30px 0 50px}
+</style></head><body><div class="w">
+<header><div class="logo">CYBER<span>QUEST</span></div><p class="lead">Capture-the-flag challenges for GCSE and T-level students. Start with the day-event edition, then dive deeper into any topic at your own pace. Everything runs in your browser: no accounts, no installs.</p></header>
+<h2>Choose a quest</h2><div class="grid">
+<a class="q" href="CyberQuest.html"><div class="i">🎯</div><div><h3>CyberQuest</h3><div class="s">The day-event edition</div><p>The original 90-minute challenge: a taste of every category, with a simulated pen-testing lab.</p><div class="m">25 challenges &middot; all topics</div></div></a>
+<a class="q" href="cyberquest-blueteam.html"><div class="i">🛡️</div><div><h3>SOC Analyst</h3><div class="s">Blue team edition</div><p>Defend the network: triage alerts, read real-style logs, respond to incidents and harden systems.</p><div class="m">16 challenges &middot; 2450 points</div></div></a>
+<a class="q" href="cyberquest-crypto.html"><div class="i">🔐</div><div><h3>Cipher Vault</h3><div class="s">Cryptography edition</div><p>Classical ciphers, encodings, hashing, passwords and the maths behind RSA.</p><div class="m">17 challenges &middot; 2125 points</div></div></a>
+<a class="q" href="cyberquest-forensics.html"><div class="i">🔎</div><div><h3>Digital Detectives</h3><div class="s">Forensics & network edition</div><p>File signatures, hidden data, packet captures, email headers and log investigation.</p><div class="m">15 challenges &middot; 2250 points</div></div></a>
+<a class="q" href="cyberquest-linux.html"><div class="i">🐧</div><div><h3>Terminal Trainer</h3><div class="s">Linux command line edition</div><p>Move around, search, copy, move and lock down files in a safe, simulated Linux terminal.</p><div class="m">18 challenges &middot; 2250 points</div></div></a>
+<a class="q" href="cyberquest-network.html"><div class="i">📡</div><div><h3>Network Navigator</h3><div class="s">Networking fundamentals edition</div><p>IP addresses, subnets, ports, protocols, the layers of the internet, and a simulated lab of real diagnostic tools.</p><div class="m">20 challenges &middot; 2600 points</div></div></a>
+<a class="q" href="cyberquest-osint.html"><div class="i">🕵️</div><div><h3>OSINT Investigator</h3><div class="s">Open-source intelligence edition</div><p>Find out what the internet already knows: metadata, usernames, domains, archives and search operators.</p><div class="m">14 challenges &middot; 1775 points</div></div></a>
+<a class="q" href="cyberquest-pentest.html"><div class="i">💻</div><div><h3>Red Team Lab</h3><div class="s">Ethical hacking edition</div><p>The ethical-hacking process on a safe, simulated range: scope, recon, access, escalation and defence.</p><div class="m">15 challenges &middot; 2125 points</div></div></a>
+<a class="q" href="cyberquest-social.html"><div class="i">🎣</div><div><h3>Human Firewall</h3><div class="s">Social engineering edition</div><p>Phishing, smishing, psychological tricks, tailgating, phone scams and how people stop them.</p><div class="m">13 challenges &middot; 1650 points</div></div></a>
+<a class="q" href="cyberquest-web.html"><div class="i">🌐</div><div><h3>Web Warriors</h3><div class="s">Web security edition</div><p>Hidden fields, forged cookies, SQL injection, XSS and broken access control in safe, simulated websites.</p><div class="m">13 challenges &middot; 1875 points</div></div></a>
+</div>
+<h2>How it works</h2><ul>
+<li>Each challenge hides a flag that looks like <code>CTF{something}</code>. Find it, submit it, bank the points.</li>
+<li>Hints are available but cost points. Progress saves in your browser.</li>
+<li>Work in a team, talk to each other, and use the Toolkit tab and web search for learning.</li>
+</ul>
+<div class="note"><b>Rules of engagement:</b> everything here is fictional or simulated. In the real world, only test systems you own or have written permission to test. In the UK, unauthorised access is a crime under the Computer Misuse Act 1990.</div>
+<h2>Where next?</h2><ul>
+<li><a href="https://tryhackme.com">TryHackMe</a>: guided, browser-based hacking labs with beginner learning paths (some content is free).</li>
+<li><a href="https://picoctf.org">picoCTF</a>: free CTF platform and practice gym aimed at students.</li>
+<li><a href="https://overthewire.org/wargames/">OverTheWire</a>: free wargames that teach Linux and security skills step by step.</li>
+<li><a href="https://www.ncsc.gov.uk/cyberfirst">NCSC CyberFirst</a>: UK government programme with courses and opportunities for young people.</li>
+</ul>
+<footer>CyberQuest &middot; every system, person and company in the challenges is fictional.</footer></div></body></html>

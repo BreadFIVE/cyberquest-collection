@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberQuest – SOC Analyst</title>
+<!--
+  Nice work – you read the source! That's hacker habit #1.
+  Your first flag: CTF{blue_team_starts_with_view_source}
+-->
+<style>
+:root{--accent:#7c9cff}
+:root{
+  --bg:#0a0e14;--panel:#111823;--panel2:#161f2e;--line:#243044;--text:#d6e2f0;--dim:#7e8ea6;
+  --green:var(--accent);--cyan:#38d6ff;--amber:#ffc247;--red:#ff5d6c;--purple:#b58bff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+body{min-height:100vh;background-image:radial-gradient(circle at 15% -10%,#12304a55,transparent 45%),radial-gradient(circle at 100% 0,#2a164a44,transparent 40%)}
+code,pre,.mono{font-family:var(--mono)}
+a{color:var(--cyan)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+header.top{position:sticky;top:0;z-index:20;background:#0a0e14ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.logo{font-family:var(--mono);font-weight:700;color:var(--green);letter-spacing:.5px}
+.logo span{color:var(--dim);font-weight:400}
+.stat{font-family:var(--mono);font-size:14px;background:var(--panel);border:1px solid var(--line);padding:5px 10px;border-radius:8px}
+.stat b{color:var(--cyan)}
+.stat.timer b{color:var(--green);font-size:17px}
+.stat.timer.warn b{color:var(--amber)}
+.stat.timer.crit b{color:var(--red);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.spacer{flex:1}
+.bar{height:3px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .4s}
+
+nav.tabs{display:flex;gap:6px;padding:10px 0;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:7px 14px;border-radius:8px;font-family:var(--mono);font-size:13px}
+nav.tabs button.on{color:var(--bg);background:var(--green);border-color:var(--green);font-weight:700}
+nav.tabs button:hover:not(.on){color:var(--text);border-color:var(--dim)}
+
+/* welcome */
+#welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+.welcome-card{max-width:680px;width:100%}
+.ascii{color:var(--green);font-size:12px;line-height:1.15;margin:0 0 14px;overflow:auto}
+h1,h2,h3{line-height:1.2;margin:0 0 10px}
+h1{font-size:28px}
+h2{font-size:20px}
+.lead{color:var(--dim);margin:0 0 16px}
+input[type=text],input[type=password],textarea,select{width:100%;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:8px;font-family:var(--mono);font-size:14px}
+input:focus,textarea:focus,select:focus{outline:2px solid #38d6ff55;border-color:var(--cyan)}
+textarea{resize:vertical;min-height:70px}
+.btn{background:var(--green);color:#04210f;border:0;padding:10px 18px;border-radius:8px;font-weight:700}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.warn{background:var(--amber);color:#2b1d00}
+.btn.danger{background:var(--red);color:#2b0006}
+ul.rules{padding-left:20px;color:var(--dim)}
+ul.rules li{margin:4px 0}
+.ethics{border-left:3px solid var(--amber);background:#ffc2470f;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+
+/* board */
+.cat{margin:22px 0 8px;display:flex;align-items:baseline;gap:10px}
+.cat h2{margin:0}
+.cat small{color:var(--dim);font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ch{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;color:var(--text);transition:.15s;position:relative}
+.ch:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.ch .t{font-weight:700;margin-bottom:6px}
+.ch .m{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:13px}
+.ch .pts{color:var(--amber)}
+.ch.done{border-color:#39ff8866;background:#0f2a1c}
+.ch.done .t::after{content:" ✓";color:var(--green)}
+.ch.done .pts{color:var(--green)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:820px;padding:22px;position:relative}
+.mclose{position:absolute;top:12px;right:12px;background:var(--panel2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:8px;font-size:18px}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+.tag.pts{color:var(--amber);border-color:#ffc24755}
+.body p{margin:10px 0}
+.body .cipher,.cipher{font-family:var(--mono);background:#0b111a;border:1px dashed var(--cyan);color:var(--cyan);padding:12px;border-radius:8px;word-break:break-all;margin:10px 0;font-size:14px;user-select:all}
+.flagrow{display:flex;gap:8px;margin-top:16px}
+.flagrow input{flex:1}
+.msg{margin-top:10px;font-family:var(--mono);font-size:14px;min-height:20px}
+.msg.ok{color:var(--green)}.msg.bad{color:var(--red)}
+.hints{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.hint{background:#ffc2470f;border-left:3px solid var(--amber);padding:8px 12px;margin:8px 0;border-radius:0 8px 8px 0;font-size:14px}
+pre.code{background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;margin:10px 0}
+pre.hexd{background:#05080c;color:#9fe8b8;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px;margin:10px 0}
+
+/* mock UI components used in challenges */
+.mock{background:#fff;color:#1b1f23;border-radius:12px;padding:14px;margin:12px 0;font-family:var(--sans);font-size:14px}
+.mock .hd{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7b5cff,#2dd4ff);flex:none}
+.mock .who b{display:block}
+.mock .who small{color:#667}
+.photo{height:170px;border-radius:10px;background:linear-gradient(180deg,#26324a,#141b2b);margin:10px 0;position:relative;overflow:hidden;color:#fff}
+.photo .monitor{position:absolute;left:18px;top:18px;width:150px;height:90px;border:4px solid #0a0e14;border-radius:6px;background:#0d2a3b;font:11px var(--mono);padding:6px;color:#6fe}
+.photo .badge{position:absolute;right:26px;top:10px;width:120px;background:#fff;color:#111;border-radius:8px;padding:8px;text-align:center;font:11px var(--mono);box-shadow:0 4px 12px #0008}
+.photo .badge::before{content:"";display:block;width:26px;height:6px;background:#999;border-radius:4px;margin:-14px auto 8px}
+.photo .badge .nm{font-weight:700;font-size:13px}
+.photo .desk{position:absolute;left:0;right:0;bottom:0;height:34px;background:#3a2c20}
+.photo .note{position:absolute;left:190px;bottom:42px;background:#ffe66d;color:#333;padding:6px 8px;font:11px var(--mono);transform:rotate(-4deg);border-radius:2px}
+.mock .feed{border-top:1px solid #e3e6ea;margin-top:10px;padding-top:10px}
+.exif{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:10px 0}
+.exif td{border-bottom:1px solid var(--line);padding:5px 8px}
+.exif td:first-child{color:var(--dim);width:38%}
+.pkt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:10px 0;display:block;overflow:auto}
+.pkt th,.pkt td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pkt th{color:var(--dim);position:sticky;top:0;background:var(--panel)}
+.pkt tr.tls td{color:#8fa}.pkt tr.dns td{color:#8cf}.pkt tr.ftp td{color:#fc8}
+.email{border:1px solid #d0d7de;border-radius:10px;padding:12px;margin:10px 0;background:#fff;color:#1b1f23}
+.email .from{font-size:13px;color:#555}
+.email .subj{font-weight:700;margin:4px 0}
+.email .btns{display:flex;gap:8px;margin-top:8px}
+.email .btns button{padding:5px 12px;border-radius:6px;border:1px solid #bbb;background:#f4f6f8;color:#222}
+.email .btns button.sel-p{background:#ffdede;border-color:#e33;color:#900;font-weight:700}
+.email .btns button.sel-l{background:#dcfbe7;border-color:#2a7;color:#065;font-weight:700}
+.email a{color:#0969da}
+.loginbox{background:#0b111a;border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.loginbox label{display:block;margin:8px 0 3px;color:var(--dim);font-size:13px}
+.loginbox .q{font-family:var(--mono);font-size:12.5px;color:var(--amber);margin-top:10px;word-break:break-all}
+.loginbox .res{margin-top:10px;font-family:var(--mono);font-size:13px}
+.res.ok{color:var(--green)}.res.bad{color:var(--red)}
+
+/* terminal */
+.term{background:#05080c;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0}
+.term .bar2{background:#0f1622;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
+.term .dot{width:10px;height:10px;border-radius:50%;background:#ff5d6c}.term .dot:nth-child(2){background:#ffc247}.term .dot:nth-child(3){background:#39ff88}
+#tout{height:420px;overflow:auto;padding:12px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;word-break:break-word;color:#cfe}
+#tout .cmd{color:var(--green)}#tout .err{color:var(--red)}#tout .sys{color:var(--cyan)}#tout .dim{color:var(--dim)}
+.tin{display:flex;align-items:center;border-top:1px solid var(--line);padding:8px 12px;gap:8px;font-family:var(--mono);font-size:13px}
+.tin span{color:var(--green);white-space:nowrap}
+.tin input{border:0;background:transparent;padding:0;outline:0!important;flex:1;color:#fff}
+
+/* toolkit */
+.tk{display:grid;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.row label{color:var(--dim);font-size:13px}
+.row input[type=text]{width:140px}
+.row input[type=number]{width:80px;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px;font-family:var(--mono)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--green);color:#04210f;font-weight:700;padding:10px 20px;border-radius:99px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--red);color:#2b0006}
+footer{color:var(--dim);font-size:12px;text-align:center;padding:30px 0 40px}
+table.sum{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+table.sum td,table.sum th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.sum td:last-child,table.sum th:last-child{text-align:right}
+.pace{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:14px}
+.pace b{font-family:var(--mono);color:var(--cyan)}
+@media(max-width:560px){.stat{font-size:12px;padding:4px 7px}h1{font-size:23px}}
+
+/* ---- collection additions ---- */
+.logo small{color:var(--dim);font-weight:400;font-size:12px;margin-left:8px;letter-spacing:1px;text-transform:uppercase}
+.subtitle{font-family:var(--mono);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;font-size:13px;margin:-6px 0 14px}
+.pickrow{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.pickrow select{width:auto;min-width:150px}
+.pickrow.ok{background:#39ff8810}.pickrow.no{background:#ff5d6c12}
+.ordl{list-style:none;padding:0;margin:10px 0}
+.ordl li{display:flex;gap:8px;align-items:center;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:14px}
+.ordl li span{flex:1}
+.ordl li button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;width:30px;height:30px}
+.logv{background:#05080c;border:1px solid var(--line);border-radius:8px;height:280px;overflow:auto;padding:8px 10px;font-family:var(--mono);font-size:12px;white-space:pre;color:#bcd}
+.logv mark{background:#ffc24744;color:#ffe;padding:0 1px}
+.sbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.sbar input[type=text]{flex:1;min-width:180px}
+.sbar span{font-family:var(--mono);font-size:13px;color:var(--dim)}
+.serp{background:#fff;color:#1b1f23;border-radius:10px;padding:12px 14px;margin:10px 0;font-family:var(--sans)}
+.serp .r{margin:10px 0}.serp .r a{color:#1a0dab;font-size:16px;text-decoration:none;display:block}
+.serp .r .u{color:#0b6b2b;font-size:12.5px}.serp .r p{margin:2px 0;color:#444;font-size:13.5px}
+.gmap{display:grid;gap:2px;margin:10px 0;max-width:460px}
+.gmap button{aspect-ratio:1;border:1px solid #2a3850;background:#0e1623;color:var(--text);border-radius:4px;font-size:15px;padding:0;position:relative}
+.gmap button small{position:absolute;left:3px;top:1px;font-size:9px;color:var(--dim);font-family:var(--mono)}
+.gmap button.river{background:#12324d}.gmap button.road{background:#262d3a}.gmap button.pick{outline:2px solid var(--amber)}
+canvas.lsb{width:100%;max-width:520px;image-rendering:pixelated;border:1px solid var(--line);border-radius:8px;display:block;margin:10px 0}
+.profile{border:1px solid #d0d7de;border-radius:10px;padding:10px 12px;margin:8px 0;background:#fff;color:#1b1f23}
+.profile .site{font-size:12px;color:#667;font-family:var(--mono)}
+table.sum td.l,table.sum th.l{text-align:left}
+.whois{white-space:pre;font-family:var(--mono);font-size:12.5px;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto}
+
+</style>
+</head>
+<body>
+<!-- ============ WELCOME ============ -->
+<section id="welcome" class="hidden">
+  <div class="card welcome-card">
+    <pre class="ascii mono">
+  ____      _               ___                   _
+ / ___|   _| |__   ___ _ __ / _ \ _   _  ___  ___| |_
+| |  | | | | '_ \ / _ \ '__| | | | | | |/ _ \/ __| __|
+| |__| |_| | |_) |  __/ |  | |_| | |_| |  __/\__ \ |_
+ \____\__, |_.__/ \___|_|   \__\_\\__,_|\___||___/\__|
+      |___/                                            </pre>
+    <div class="subtitle">Blue team edition</div>
+    <h1>Welcome, operative.</h1>
+    <p class="lead">Hackers get the headlines, but defenders get the jobs. Spend 90 minutes as a junior analyst in a Security Operations Centre (SOC): sort real alerts from false alarms, dig through server logs for an attacker, and decide what to do when an incident lands on your desk.</p>
+    <ul class="rules">
+      <li>Each challenge hides a <b>flag</b> in the format <code>CTF{something_like_this}</code>. Find it, submit it, bank the points.</li>
+      <li>Hints are available but <b>cost points</b> (10% for the first, 30% for the second).</li>
+      <li>You have <b>one clock</b> for everything (90 minutes). Skip hard ones and come back &ndash; harder challenges are worth more.</li>
+      <li>The <b>log challenges</b> give you a searchable log viewer. Use the filter box: try words like <code>Failed</code>, <code>Accepted</code> or <code>404</code>, and tick <b>regex</b> for patterns.</li>
+      <li>All the companies, systems and addresses are <b>fictional</b>.</li>
+      <li>Work in teams of 2&ndash;4. Talk to each other. That's how real security teams work.</li>
+    </ul>
+    <div class="ethics"><b>&#9878;&#65039; Rules of engagement:</b> Everything here is fictional or simulated. In the real world, only test systems you own or have <b>written permission</b> to test. Unauthorised access is a crime (in the UK, the Computer Misuse Act 1990). Skills for defence, not harm.</div>
+    <label for="teamname" class="lead" style="display:block;margin-bottom:6px">Team name</label>
+    <input id="teamname" type="text" maxlength="30" placeholder="e.g. Null Pointers" autocomplete="off">
+    <p style="margin:16px 0 0"><button class="btn" id="startbtn">&#9654; Start the clock</button></p>
+    <p class="lead" style="margin:12px 0 0;font-size:13px">Progress saves in this browser, so refreshing won't lose your score. Use one device per team.</p>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+<header class="top">
+  <div class="wrap">
+    <div class="topin">
+      <div class="logo">CYBER<span>QUEST</span><small>SOC Analyst</small></div>
+      <div class="stat">Team <b id="hTeam">&ndash;</b></div>
+      <div class="spacer"></div>
+      <div class="stat">Score <b id="hScore">0</b></div>
+      <div class="stat">Solved <b id="hSolved">0/0</b></div>
+      <div class="stat timer" id="timerBox">&#9201; <b id="hTimer">90:00</b></div>
+    </div>
+  </div>
+  <div class="bar"><i id="hBar"></i></div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs">
+    <button data-tab="board" class="on">🎯 Challenges</button>
+    <button data-tab="tools">🧰 Toolkit</button>
+    <button data-tab="brief">📋 Briefing</button>
+  </nav>
+
+  <section id="tab-board"></section>
+
+  
+
+  <section id="tab-tools" class="hidden">
+    <h2>&#129520; Toolkit</h2>
+    <p class="lead">Handy decoders, ciphers and hash tools, running entirely in your browser. Real CTF players use sites like CyberChef too &ndash; feel free.</p>
+    <div class="tk">
+      <div class="card">
+        <h3>Encode / decode</h3>
+        <textarea id="tkIn" placeholder="Input&hellip;" rows="4"></textarea>
+        <div class="row" id="tkBtns"></div>
+        <textarea id="tkOut" placeholder="Output&hellip;" rows="4" readonly></textarea>
+        <div class="row"><button class="btn sec sm" id="tkSwap">&#8645; Output &rarr; Input</button></div>
+      </div>
+      <div class="card">
+        <h3>Ciphers</h3>
+        <div class="row">
+          <label>Caesar shift</label><input type="number" id="cShift" value="3" min="1" max="25">
+          <button class="btn sec sm" id="cGo">Shift</button>
+          <button class="btn sec sm" id="cBrute">Try all 25</button>
+        </div>
+        <div class="row">
+          <label>Vigen&egrave;re key</label><input type="text" id="vKey" placeholder="key">
+          <button class="btn sec sm" id="vEnc">Encrypt</button>
+          <button class="btn sec sm" id="vDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>Rail fence rails</label><input type="number" id="rRails" value="3" min="2" max="10">
+          <button class="btn sec sm" id="rEnc">Encrypt</button>
+          <button class="btn sec sm" id="rDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>XOR key (hex byte)</label><input type="text" id="xKey" placeholder="e.g. 2a">
+          <button class="btn sec sm" id="xGo">XOR hex input</button>
+          <button class="btn sec sm" id="xBrute">Brute-force all 256</button>
+        </div>
+        <p class="lead" style="font-size:13px;margin:6px 0 0">Caesar, Vigen&egrave;re and Rail fence read the Input box. XOR expects the input as hex (e.g. <code>1f 2a 3b</code> or <code>1f2a3b</code>).</p>
+      </div>
+      <div class="card">
+        <h3>Hash cracker</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">Paste a wordlist (one word per line) in the Input box above, enter a target hash, pick the algorithm (and a salt if you have one), and see if any word matches. Exactly how attackers use leaked password lists.</p>
+        <div class="row"><input type="text" id="hTarget" placeholder="target hash" style="width:100%;max-width:520px"></div>
+        <div class="row">
+          <label>Algorithm</label><select id="hAlg" style="width:auto"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256">SHA-256</option></select>
+          <label>Salt</label><input type="text" id="hSalt" placeholder="(optional)" style="width:130px">
+          <select id="hSaltPos" style="width:auto"><option value="pre">salt + word</option><option value="post">word + salt</option></select>
+        </div>
+        <div class="row"><button class="btn sec sm" id="hGo">Crack</button><button class="btn sec sm" id="hOne">Just hash my input</button></div>
+      </div>
+      <div class="card">
+        <h3>Number theory helper</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">For RSA and Diffie&ndash;Hellman style maths. Uses big integers, so large numbers are fine.</p>
+        <div class="row"><label>a</label><input type="text" id="nA" style="width:130px"><label>b</label><input type="text" id="nB" style="width:130px"><label>m</label><input type="text" id="nM" style="width:130px"></div>
+        <div class="row">
+          <button class="btn sec sm" id="nPow">a<sup>b</sup> mod m</button>
+          <button class="btn sec sm" id="nInv">inverse of a mod m</button>
+          <button class="btn sec sm" id="nGcd">gcd(a, b)</button>
+          <button class="btn sec sm" id="nFac">factorise a</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-brief" class="hidden">
+    <div class="card">
+      <h2>&#128203; Briefing</h2>
+      <p class="lead">Suggested pacing for your 90 minutes:</p>
+      <div class="pace">
+        <b>0–10 min</b><span>Warm-up, then the CIA triad: what defenders are protecting.</span>
+        <b>10–35 min</b><span>Alert triage: real threat or false alarm, and what to look at first.</span>
+        <b>35–65 min</b><span>Log analysis: find the attacker in the authentication log and the web server log.</span>
+        <b>65–85 min</b><span>Incident response: the standard process, then three decisions under pressure.</span>
+        <b>85–90 min</b><span>Hardening and the attacker's journey, to see where defences fit.</span>
+      </div>
+      <h3 style="margin-top:20px">Flag tips</h3>
+      <ul class="rules">
+        <li>Flags look like <code>CTF{...}</code>. Not case-sensitive, but spelling and underscores matter.</li>
+        <li>In the log viewer, start broad (<code>Failed</code>) then narrow (add an IP address). Each filter shows a line count.</li>
+        <li>When you find an IP address, search for it. Everything that address did is then in one place.</li>
+        <li>Defenders think in <b>timelines</b>: what happened first, and what came next?</li>
+        <li>Stuck? Try the simplest thing first. Most challenges are puzzles, not brute force.</li>
+      </ul>
+      <div class="row" style="margin-top:18px">
+        <button class="btn warn" id="finishBtn">&#127937; Finish &amp; show report</button>
+        <button class="btn sec" id="reportBtn">&#128196; View current report</button>
+      </div>
+      <div id="hostbox" class="hidden" style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <h3>&#128295; Host controls</h3>
+        <div class="row">
+          <button class="btn sec sm" id="hostPlus">+10 minutes</button>
+          <button class="btn danger sm" id="hostReset">Reset this browser</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="wrap">CyberQuest &middot; SOC Analyst &middot; every system, person and company here is fictional &middot; stay legal, stay curious</footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="mbox" id="mbox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+const CONFIG={"id":"blueteam","name":"SOC Analyst","cats":{"intro":{"name":"Warm-Up","icon":"🚀","blurb":"Start here"},"triage":{"name":"Alert Triage","icon":"🚨","blurb":"Real threat or false alarm?"},"logs":{"name":"Log Analysis","icon":"📜","blurb":"Find the attacker in the evidence"},"ir":{"name":"Incident Response","icon":"🚒","blurb":"What to do when it happens"},"defend":{"name":"Detect & Harden","icon":"🧱","blurb":"Make attacks harder and louder"},"threat":{"name":"Know the Enemy","icon":"🎭","blurb":"How attacks unfold"}},"minutes":90,"lab":null};
+const DATA=[{"id":"bt_src","cat":"intro","title":"Read the Room","pts":50,"diff":1,"body":"<p>Right-click this page and choose <b>\"View Page Source\"</b> (or press <code>Ctrl+U</code>). Near the top of the HTML there is a comment with your first flag.</p>","h":"hae106ae6","hints":["Look for an HTML comment: <code>&lt;!-- ... --&gt;</code>, near the &lt;head&gt;.","It is in the first 10 lines of the document, right after the &lt;title&gt; tag."],"widget":null},{"id":"bt_cia","cat":"intro","title":"What Are We Protecting?","pts":100,"diff":1,"body":"<p>Security has three goals, called the <b>CIA triad</b>: <b>Confidentiality</b> (only the right people can see it), <b>Integrity</b> (it has not been secretly changed) and <b>Availability</b> (it is there when needed). Each incident below breaks one of them. Which?</p>","h":"poyebnaike","hints":["Leaked or snooped data is confidentiality. Altered data is integrity. Locked or offline data is availability.","Each of the three is used twice."],"widget":"classify","wd":{"options":["Confidentiality","Integrity","Availability"],"win":"you know what is at stake","retry":"Was something seen, changed or made unavailable?","items":[{"t":"Customer records are copied and posted online","a":0},{"t":"An attacker quietly changes grades in the school database","a":1},{"t":"Ransomware locks every file on the file server","a":2},{"t":"An employee reads a colleague&rsquo;s private emails","a":0},{"t":"A signed contract is edited after it was approved","a":1},{"t":"A flood of traffic takes the website offline for hours","a":2}]}},{"id":"bt_alerts","cat":"triage","title":"Real or False Alarm?","pts":150,"diff":2,"body":"<p>A SOC sees hundreds of alerts a day. Most are <b>false alarms</b> (harmless things that looked suspicious). Analysts decide which are <b>real threats</b> by asking <i>who, what, when and does this fit normal behaviour?</i> Judge each alert.</p>","h":"220dlkngc5c","hints":["Ask whether there is a normal explanation (approved work, known tool, usual location).","Lots of failures then a success, malware servers and lookalike domains are all classic warning signs."],"widget":"classify","wd":{"options":["Real threat","False alarm"],"win":"a good triage call","retry":"Look for things that do not fit: unusual place, time, volume or destination.","items":[{"t":"A UK-based employee logs in from the UK at 09:02 with the correct password","a":1},{"t":"50 failed logins in one minute from a foreign address, then one success","a":0},{"t":"Antivirus flags the company&rsquo;s own approved backup tool","a":1},{"t":"A finance laptop is contacting a server known to control malware","a":0},{"t":"The IT team runs a port scan at 03:00 inside a scheduled, approved maintenance window","a":1},{"t":"A staff member receives an email from a lookalike domain with an <code>.exe</code> attached","a":0}]}},{"id":"bt_priority","cat":"triage","title":"What First?","pts":150,"diff":2,"body":"<p>Five alerts arrive at once. Put them in the order you would handle them: most urgent and most damaging <b>first</b>.</p>","h":"1e1oncqgbkf","hints":["Damage in progress beats damage that might happen.","A privileged account that looks hijacked is much more serious than one user's failed logins."],"widget":"order","wd":{"items":["Ransomware is encrypting files on the main file server <i>right now</i>","The admin account logged in from two countries within ten minutes","Several failed logins on one workstation","An out-of-date program is flagged on a test machine","A user visited a blocked social media site"],"retry":"Ask: is damage happening now, and how bad could it get?"}},{"id":"bt_hdr","cat":"triage","title":"Read the Email Header","pts":150,"diff":2,"body":"<p>A customer reports an email that appears to come from their bank. The <b>From</b> line is easy to fake, but other headers are harder to hide. Here are the headers:</p><pre class=\"code\">From: \"Halcyon Bank Support\" &lt;support@halcyonbank.example&gt;\nTo: customer@mail.example\nSubject: Urgent: your account will be closed\nReturn-Path: &lt;bounce@halcyonbank-support.example&gt;\nReceived: from mail.halcyonbank-support.example (203.0.113.200)\nAuthentication-Results: spf=fail; dkim=none; dmarc=fail\nReply-To: help@halcyonbank-support.example</pre><p>The real bank's domain is <code>halcyonbank.example</code>. The email actually came from a <b>different, lookalike domain</b> shown in the <code>Return-Path</code> line. The flag is <code>CTF{lookalike-domain}</code>.</p>","h":"qqzb4w8ani","hints":["Compare the domain after the <code>@</code> in <code>From</code> with the one in <code>Return-Path</code>.","The lookalike adds a word to the real name. SPF and DMARC failures confirm the email was not sent by the real bank."],"widget":null,"loose":true},{"id":"bt_auth","cat":"logs","title":"Who Got In?","pts":175,"diff":3,"body":"<p>The server <code>srv01</code> had an alert for a very large number of failed SSH logins. Below is its <b>authentication log</b>. Use the filter box: try <code>Failed</code> to see the attack, then <code>Accepted</code> to see who logged in.</p><p>Normal staff log in from <code>10.0.0.x</code> addresses. One <b>successful</b> login came from the attacker's address, after the failed attempts. Which <b>username</b> did the attacker get into? The flag is <code>CTF{username}</code>.</p>","h":"26mtcs12qp5","hints":["Search for <code>Failed</code> and note the IP address that keeps appearing. Then search for that IP address.","One line for that IP says <code>Accepted password</code>. The username comes after <code>for</code>."],"widget":"logs","wd":{"lines":["Mar  2 01:05:00 srv01 sshd[2105]: Failed password for bob from 10.0.0.34 port 40111 ssh2","Mar  2 02:10:08 srv01 sshd[2106]: Failed password for root from 203.0.113.50 port 52000 ssh2","Mar  2 02:10:11 srv01 sshd[2107]: Failed password for admin from 203.0.113.50 port 52017 ssh2","Mar  2 02:10:16 srv01 sshd[2108]: Failed password for test from 203.0.113.50 port 52034 ssh2","Mar  2 02:10:23 srv01 sshd[2109]: Failed password for oracle from 203.0.113.50 port 52051 ssh2","Mar  2 02:10:27 srv01 sshd[2110]: Failed password for ubuntu from 203.0.113.50 port 52068 ssh2","Mar  2 02:10:33 srv01 sshd[2111]: Failed password for postgres from 203.0.113.50 port 52085 ssh2","Mar  2 02:10:36 srv01 sshd[2112]: Failed password for svc_backup from 203.0.113.50 port 52102 ssh2","Mar  2 02:10:41 srv01 sshd[2113]: Failed password for root from 203.0.113.50 port 52119 ssh2","Mar  2 02:10:48 srv01 sshd[2114]: Failed password for admin from 203.0.113.50 port 52136 ssh2","Mar  2 02:10:52 srv01 sshd[2115]: Failed password for deploy from 203.0.113.50 port 52153 ssh2","Mar  2 02:10:58 srv01 sshd[2116]: Failed password for test from 203.0.113.50 port 52170 ssh2","Mar  2 02:11:01 srv01 sshd[2117]: Failed password for svc_backup from 203.0.113.50 port 52187 ssh2","Mar  2 02:11:06 srv01 sshd[2118]: Failed password for root from 203.0.113.50 port 52204 ssh2","Mar  2 02:11:13 srv01 sshd[2119]: Failed password for svc_backup from 203.0.113.50 port 52221 ssh2","Mar  2 02:11:17 srv01 sshd[2120]: Failed password for admin from 203.0.113.50 port 52238 ssh2","Mar  2 02:11:23 srv01 sshd[2121]: Failed password for guest from 203.0.113.50 port 52255 ssh2","Mar  2 02:11:26 srv01 sshd[2122]: Failed password for root from 203.0.113.50 port 52272 ssh2","Mar  2 02:11:31 srv01 sshd[2123]: Failed password for svc_backup from 203.0.113.50 port 52289 ssh2","Mar  2 02:11:38 srv01 sshd[2124]: Failed password for svc_backup from 203.0.113.50 port 52306 ssh2","Mar  2 02:11:42 srv01 sshd[2125]: Failed password for svc_backup from 203.0.113.50 port 52323 ssh2","Mar  2 02:11:48 srv01 sshd[2126]: Accepted password for svc_backup from 203.0.113.50 port 52412 ssh2","Mar  2 02:12:10 srv01 sshd[2127]: sudo:  svc_backup : TTY=pts/1 ; PWD=/home/svc_backup ; USER=root ; COMMAND=/usr/bin/crontab -e","Mar  2 02:12:58 srv01 sshd[2128]: pam_unix(sshd:session): session closed for user svc_backup","Mar  2 08:02:11 srv01 sshd[2100]: Accepted publickey for alice from 10.0.0.21 port 41000 ssh2","Mar  2 08:41:03 srv01 sshd[2101]: Accepted publickey for bob from 10.0.0.34 port 41013 ssh2","Mar  2 09:15:40 srv01 sshd[2102]: Accepted publickey for alice from 10.0.0.21 port 41026 ssh2","Mar  2 11:02:09 srv01 sshd[2103]: Accepted publickey for carol from 10.0.0.57 port 41039 ssh2","Mar  2 13:30:22 srv01 sshd[2104]: Accepted publickey for bob from 10.0.0.34 port 41052 ssh2"],"placeholder":"Filter the log… (try Failed, then Accepted)"}},{"id":"bt_when","cat":"logs","title":"Time of Compromise","pts":175,"diff":3,"body":"<p>Same log, new question. Incident reports need an exact <b>timeline</b>. At what time did the attacker's successful login happen? The flag is <code>CTF{HH:MM:SS}</code>, copied from the log line.</p><p>Hint for your investigation: after the login, what did the attacker do next? Search the log for <code>sudo</code> too.</p>","h":"1vu90wa6tgz","hints":["Search for the attacker's IP address and the word <code>Accepted</code> together, for example with regex on: <code>Accepted.*203</code>.","The time is the 3rd column of the line: after the date <code>Mar  2</code>."],"widget":"logs","wd":{"lines":["Mar  2 01:05:00 srv01 sshd[2105]: Failed password for bob from 10.0.0.34 port 40111 ssh2","Mar  2 02:10:08 srv01 sshd[2106]: Failed password for root from 203.0.113.50 port 52000 ssh2","Mar  2 02:10:11 srv01 sshd[2107]: Failed password for admin from 203.0.113.50 port 52017 ssh2","Mar  2 02:10:16 srv01 sshd[2108]: Failed password for test from 203.0.113.50 port 52034 ssh2","Mar  2 02:10:23 srv01 sshd[2109]: Failed password for oracle from 203.0.113.50 port 52051 ssh2","Mar  2 02:10:27 srv01 sshd[2110]: Failed password for ubuntu from 203.0.113.50 port 52068 ssh2","Mar  2 02:10:33 srv01 sshd[2111]: Failed password for postgres from 203.0.113.50 port 52085 ssh2","Mar  2 02:10:36 srv01 sshd[2112]: Failed password for svc_backup from 203.0.113.50 port 52102 ssh2","Mar  2 02:10:41 srv01 sshd[2113]: Failed password for root from 203.0.113.50 port 52119 ssh2","Mar  2 02:10:48 srv01 sshd[2114]: Failed password for admin from 203.0.113.50 port 52136 ssh2","Mar  2 02:10:52 srv01 sshd[2115]: Failed password for deploy from 203.0.113.50 port 52153 ssh2","Mar  2 02:10:58 srv01 sshd[2116]: Failed password for test from 203.0.113.50 port 52170 ssh2","Mar  2 02:11:01 srv01 sshd[2117]: Failed password for svc_backup from 203.0.113.50 port 52187 ssh2","Mar  2 02:11:06 srv01 sshd[2118]: Failed password for root from 203.0.113.50 port 52204 ssh2","Mar  2 02:11:13 srv01 sshd[2119]: Failed password for svc_backup from 203.0.113.50 port 52221 ssh2","Mar  2 02:11:17 srv01 sshd[2120]: Failed password for admin from 203.0.113.50 port 52238 ssh2","Mar  2 02:11:23 srv01 sshd[2121]: Failed password for guest from 203.0.113.50 port 52255 ssh2","Mar  2 02:11:26 srv01 sshd[2122]: Failed password for root from 203.0.113.50 port 52272 ssh2","Mar  2 02:11:31 srv01 sshd[2123]: Failed password for svc_backup from 203.0.113.50 port 52289 ssh2","Mar  2 02:11:38 srv01 sshd[2124]: Failed password for svc_backup from 203.0.113.50 port 52306 ssh2","Mar  2 02:11:42 srv01 sshd[2125]: Failed password for svc_backup from 203.0.113.50 port 52323 ssh2","Mar  2 02:11:48 srv01 sshd[2126]: Accepted password for svc_backup from 203.0.113.50 port 52412 ssh2","Mar  2 02:12:10 srv01 sshd[2127]: sudo:  svc_backup : TTY=pts/1 ; PWD=/home/svc_backup ; USER=root ; COMMAND=/usr/bin/crontab -e","Mar  2 02:12:58 srv01 sshd[2128]: pam_unix(sshd:session): session closed for user svc_backup","Mar  2 08:02:11 srv01 sshd[2100]: Accepted publickey for alice from 10.0.0.21 port 41000 ssh2","Mar  2 08:41:03 srv01 sshd[2101]: Accepted publickey for bob from 10.0.0.34 port 41013 ssh2","Mar  2 09:15:40 srv01 sshd[2102]: Accepted publickey for alice from 10.0.0.21 port 41026 ssh2","Mar  2 11:02:09 srv01 sshd[2103]: Accepted publickey for carol from 10.0.0.57 port 41039 ssh2","Mar  2 13:30:22 srv01 sshd[2104]: Accepted publickey for bob from 10.0.0.34 port 41052 ssh2"],"placeholder":"Filter the log…"}},{"id":"bt_scan","cat":"logs","title":"The Scanner","pts":175,"diff":3,"body":"<p>Now the <b>web server access log</b>. Each line shows the visitor's IP address, the page they asked for and the <b>status code</b> (200 = found, 404 = not found, 500 = server error).</p><p>Someone is <b>probing the site for hidden pages</b>, so they ask for lots of things that do not exist. Filter for <code>404</code>. Which IP address generates by far the most 404 errors? The flag is <code>CTF{ip-address}</code>.</p>","h":"1nlkbflrgr3","hints":["Search for <code>\" 404 </code> (with the quote and spaces) so you do not match other numbers.","Most 404s come from one address, asking for names like /admin and /backup.zip. A normal visitor only gets one or two."],"widget":"logs","wd":{"lines":["10.0.0.21 - - [02/Mar/2026:09:00:01 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:00:07 +0000] \"GET /admin HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:11 +0000] \"GET /config.bak HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:00:13 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:00:20 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:00:25 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:00:28 +0000] \"GET /backup.zip HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:29 +0000] \"GET /old HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:00:35 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:00:39 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:00:41 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:00:48 +0000] \"GET /wp-login.php HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:53 +0000] \"GET /test HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:00:56 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:00:57 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:01:03 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:01:07 +0000] \"GET /.env HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:09 +0000] \"GET /db.sql HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:01:16 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:01:21 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:01:24 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:01:25 +0000] \"GET /phpmyadmin HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:31 +0000] \"GET /secret HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:01:35 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:01:37 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:01:44 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:01:49 +0000] \"GET /config.bak HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:52 +0000] \"GET /login.php HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:01:53 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:01:59 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:02:03 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:02:05 +0000] \"GET /old HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:12 +0000] \"GET /server-status HTTP/1.1\" 404 196","10.0.0.21 - - [02/Mar/2026:09:02:17 +0000] \"GET /missing-image.png HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:02:20 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:02:21 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:02:27 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:02:31 +0000] \"GET /test HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:33 +0000] \"GET /.git/config HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:02:40 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:02:45 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:02:48 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:02:49 +0000] \"GET /db.sql HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:55 +0000] \"GET /uploads HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:02:59 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:03:01 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:03:08 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:03:13 +0000] \"GET /secret HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:16 +0000] \"GET /private HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:03:17 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:03:23 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:03:27 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:03:29 +0000] \"GET /login.php HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:36 +0000] \"GET /admin HTTP/1.1\" 404 196","203.0.113.17 - - [02/Mar/2026:09:03:41 +0000] \"GET /favicon.ico HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:03:44 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:03:45 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:03:51 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:03:55 +0000] \"GET /server-status HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:57 +0000] \"GET /backup.zip HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:04:04 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:04:09 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:04:12 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:04:13 +0000] \"GET /.git/config HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:04:19 +0000] \"GET /wp-login.php HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:04:23 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:04:25 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:04:32 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:04:37 +0000] \"GET /uploads HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:04:40 +0000] \"GET /.env HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:04:41 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:04:47 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:04:51 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:04:53 +0000] \"GET /private HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:05:00 +0000] \"GET /phpmyadmin HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:05:05 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:05:08 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:05:09 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","192.0.2.88 - - [02/Mar/2026:09:05:15 +0000] \"GET /products?id=7 HTTP/1.1\" 200 6200","192.0.2.88 - - [02/Mar/2026:09:05:19 +0000] \"GET /products?id=7' HTTP/1.1\" 500 310","192.0.2.88 - - [02/Mar/2026:09:05:21 +0000] \"GET /products?id=7'%20UNION%20SELECT%20username,password%20FROM%20users-- HTTP/1.1\" 500 310","192.0.2.88 - - [02/Mar/2026:09:05:28 +0000] \"GET /products?id=7'%20OR%20'1'='1 HTTP/1.1\" 200 18433","10.0.0.21 - - [02/Mar/2026:09:05:33 +0000] \"GET / HTTP/1.1\" 200 5120","10.0.0.34 - - [02/Mar/2026:09:05:36 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.17 - - [02/Mar/2026:09:05:37 +0000] \"GET /about HTTP/1.1\" 200 2210","203.0.113.121 - - [02/Mar/2026:09:05:43 +0000] \"GET /contact HTTP/1.1\" 200 1984","198.51.100.200 - - [02/Mar/2026:09:05:47 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","192.0.2.15 - - [02/Mar/2026:09:05:49 +0000] \"GET /images/logo.png HTTP/1.1\" 200 9120"],"placeholder":"Filter the log… (try 404)"}},{"id":"bt_sqli","cat":"logs","title":"Spot the Injection","pts":200,"diff":3,"body":"<p>Same web log. A different visitor is trying to attack the database behind the products page with <b>SQL injection</b>. In a log you can recognise it by odd characters in the address: an apostrophe (<code>'</code> or <code>%27</code>), words such as <code>UNION SELECT</code> and <code>OR '1'='1</code>. Spaces appear as <code>%20</code>.</p><p>Which IP address sent a request containing <code>UNION%20SELECT</code>? The flag is <code>CTF{ip-address}</code>.</p>","h":"13h78pp12hq","hints":["Search for <code>UNION</code>.","Notice the 500 status codes: the server errored as the attacker experimented. Then search for that IP to see everything it did."],"widget":"logs","wd":{"lines":["10.0.0.21 - - [02/Mar/2026:09:00:01 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:00:07 +0000] \"GET /admin HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:11 +0000] \"GET /config.bak HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:00:13 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:00:20 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:00:25 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:00:28 +0000] \"GET /backup.zip HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:29 +0000] \"GET /old HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:00:35 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:00:39 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:00:41 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:00:48 +0000] \"GET /wp-login.php HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:00:53 +0000] \"GET /test HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:00:56 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:00:57 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:01:03 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:01:07 +0000] \"GET /.env HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:09 +0000] \"GET /db.sql HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:01:16 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:01:21 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:01:24 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:01:25 +0000] \"GET /phpmyadmin HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:31 +0000] \"GET /secret HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:01:35 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:01:37 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:01:44 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:01:49 +0000] \"GET /config.bak HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:01:52 +0000] \"GET /login.php HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:01:53 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:01:59 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:02:03 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:02:05 +0000] \"GET /old HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:12 +0000] \"GET /server-status HTTP/1.1\" 404 196","10.0.0.21 - - [02/Mar/2026:09:02:17 +0000] \"GET /missing-image.png HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:02:20 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:02:21 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:02:27 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:02:31 +0000] \"GET /test HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:33 +0000] \"GET /.git/config HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:02:40 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:02:45 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:02:48 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:02:49 +0000] \"GET /db.sql HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:02:55 +0000] \"GET /uploads HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:02:59 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:03:01 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:03:08 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:03:13 +0000] \"GET /secret HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:16 +0000] \"GET /private HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:03:17 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:03:23 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:03:27 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:03:29 +0000] \"GET /login.php HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:36 +0000] \"GET /admin HTTP/1.1\" 404 196","203.0.113.17 - - [02/Mar/2026:09:03:41 +0000] \"GET /favicon.ico HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:03:44 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:03:45 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:03:51 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:03:55 +0000] \"GET /server-status HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:03:57 +0000] \"GET /backup.zip HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:04:04 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:04:09 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:04:12 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:04:13 +0000] \"GET /.git/config HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:04:19 +0000] \"GET /wp-login.php HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:04:23 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:04:25 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:04:32 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","198.51.100.9 - - [02/Mar/2026:09:04:37 +0000] \"GET /uploads HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:04:40 +0000] \"GET /.env HTTP/1.1\" 404 196","198.51.100.200 - - [02/Mar/2026:09:04:41 +0000] \"GET /products HTTP/1.1\" 200 8321","192.0.2.15 - - [02/Mar/2026:09:04:47 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","10.0.0.21 - - [02/Mar/2026:09:04:51 +0000] \"GET /products HTTP/1.1\" 200 8321","198.51.100.9 - - [02/Mar/2026:09:04:53 +0000] \"GET /private HTTP/1.1\" 404 196","198.51.100.9 - - [02/Mar/2026:09:05:00 +0000] \"GET /phpmyadmin HTTP/1.1\" 404 196","10.0.0.34 - - [02/Mar/2026:09:05:05 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","203.0.113.17 - - [02/Mar/2026:09:05:08 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.121 - - [02/Mar/2026:09:05:09 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","192.0.2.88 - - [02/Mar/2026:09:05:15 +0000] \"GET /products?id=7 HTTP/1.1\" 200 6200","192.0.2.88 - - [02/Mar/2026:09:05:19 +0000] \"GET /products?id=7' HTTP/1.1\" 500 310","192.0.2.88 - - [02/Mar/2026:09:05:21 +0000] \"GET /products?id=7'%20UNION%20SELECT%20username,password%20FROM%20users-- HTTP/1.1\" 500 310","192.0.2.88 - - [02/Mar/2026:09:05:28 +0000] \"GET /products?id=7'%20OR%20'1'='1 HTTP/1.1\" 200 18433","10.0.0.21 - - [02/Mar/2026:09:05:33 +0000] \"GET / HTTP/1.1\" 200 5120","10.0.0.34 - - [02/Mar/2026:09:05:36 +0000] \"GET /products HTTP/1.1\" 200 8321","203.0.113.17 - - [02/Mar/2026:09:05:37 +0000] \"GET /about HTTP/1.1\" 200 2210","203.0.113.121 - - [02/Mar/2026:09:05:43 +0000] \"GET /contact HTTP/1.1\" 200 1984","198.51.100.200 - - [02/Mar/2026:09:05:47 +0000] \"GET /css/site.css HTTP/1.1\" 200 3411","192.0.2.15 - - [02/Mar/2026:09:05:49 +0000] \"GET /images/logo.png HTTP/1.1\" 200 9120"],"placeholder":"Filter the log… (try UNION)"}},{"id":"bt_ir","cat":"ir","title":"The Incident Response Lifecycle","pts":150,"diff":2,"body":"<p>Professionals follow a standard <b>incident response</b> process, so nobody has to improvise in a crisis. Put the six stages in order.</p>","h":"kh8rc7a9g4","hints":["Preparation happens before the incident. Lessons learned come last.","Containment (stopping the spread) comes before eradication (removing the cause)."],"widget":"order","wd":{"items":["<b>Prepare</b>: plans, tools and training before anything happens","<b>Detect and analyse</b>: spot the incident and work out what it is","<b>Contain</b>: stop it spreading","<b>Eradicate</b>: remove the cause (malware, bad accounts)","<b>Recover</b>: restore systems and check they are clean","<b>Learn</b>: review what happened and improve"],"retry":"You cannot clean up something you have not stopped yet."}},{"id":"bt_contain","cat":"ir","title":"Ransom Note","pts":200,"diff":3,"body":"<p>It is your first week in the SOC. Make the calls, and aim for the response a good analyst would give. (There are several ways to go wrong. You can start again.)</p>","h":"ihvmm8ubie","hints":["The first goal is to stop it spreading, without destroying evidence.","Then tell the right people quickly. Finally, remove the cause, not just the symptom."],"widget":"branch","wd":{"start":"a","nodes":{"a":{"text":"<b>09:40.</b> A colleague phones you. Their PC is showing a message: <i>\"Your files are encrypted. Pay to get them back.\"</i> What do you tell them to do first?","choices":[{"t":"Pay quickly so everyone can get back to work","to":"l1"},{"t":"Unplug the network cable (or turn off Wi-Fi) but leave the PC switched on","to":"b"},{"t":"Delete the message and carry on working","to":"l2"},{"t":"Restart the PC to see if it goes away","to":"l3"}]},"b":{"text":"Good: <b>isolating</b> the machine stops the infection reaching shared drives and other PCs. Next?","choices":[{"t":"Report it to the incident manager with the time and what the user did","to":"c"},{"t":"Wait until the end of the day in case it is nothing","to":"l4"}]},"c":{"text":"The security team traces it to a phishing attachment. The user's files can be restored from last night's <b>offline backup</b>. What is the best plan?","choices":[{"t":"Wipe and rebuild the PC, then restore the files from the clean backup","to":"w"},{"t":"Restore the files and plug it straight back in without rebuilding","to":"l5"},{"t":"Download a free decryption tool from a random website","to":"l6"}]},"w":{"end":"win","text":"The infection is contained, reported, removed and recovered from, and no criminals were paid. The team will now add a lesson to the training: <i>never open unexpected attachments</i>."},"l1":{"end":"lose","text":"Paying funds criminals, does not guarantee you get your files back, and marks you as a target who pays."},"l2":{"end":"lose","text":"The ransomware keeps working in the background and spreads across the network."},"l3":{"end":"lose","text":"Restarting can finish off the encryption and destroy evidence the team needs."},"l4":{"end":"lose","text":"Every hour of delay lets the infection spread to more machines."},"l5":{"end":"lose","text":"The malware is still on the machine and encrypts everything again."},"l6":{"end":"lose","text":"Random \"decryptors\" are often more malware."}}}},{"id":"bt_phishresp","cat":"ir","title":"I Clicked It","pts":175,"diff":2,"body":"<p>A user enters their password on a fake login page, then realises it was a phishing email. They come to you in a panic. Handle it well.</p>","h":"221gvc119xp","hints":["The user did the right thing by speaking up. The password must be changed straight away.","Think about what the attacker may already have done with the password before it was changed."],"widget":"branch","wd":{"start":"a","nodes":{"a":{"text":"The user says: \"I think I just gave my password to a fake website. What do I do?\"","choices":[{"t":"\"It is probably fine. Wait and see.\"","to":"l1"},{"t":"\"Change your password from a trusted device (and anywhere else you reuse it), and I will log this.\"","to":"b"},{"t":"\"Delete the email so nobody finds out.\"","to":"l2"}]},"b":{"text":"The password is changed and the incident is logged. As an analyst, what else do you check?","choices":[{"t":"Review recent logins on the account, sign out any active sessions, and make sure MFA is switched on","to":"w"},{"t":"Close the ticket: the password is changed so we are done","to":"l3"}]},"w":{"end":"win","text":"You found no suspicious logins, ended any open sessions and added MFA. The user is thanked for reporting quickly: <i>fast reporting is what limits the damage</i>."},"l1":{"end":"lose","text":"Waiting gives the attacker time to use the password. Minutes matter."},"l2":{"end":"lose","text":"Hiding it means the real attack is never investigated, and other staff got the same email."},"l3":{"end":"lose","text":"The attacker may already have signed in and set up forwarding or a hidden session. Changing the password alone does not end that."}}}},{"id":"bt_ioc","cat":"defend","title":"Indicators of Compromise","pts":150,"diff":2,"body":"<p>An <b>indicator of compromise</b> (IoC) is a clue that a system may have been breached. Which of these should make an analyst look closer?</p>","h":"1se97od23um","hints":["Unusual accounts, unusual times and unusual data movements are suspicious.","Things that happen on a schedule and for a reason are usually normal."],"widget":"classify","wd":{"options":["Suspicious","Normal"],"win":"trained eyes","retry":"Does it match how the business normally works?","items":[{"t":"A new admin account created at 03:00 on a Sunday","a":0},{"t":"A staff member logs in at 09:00 on a Monday","a":1},{"t":"Gigabytes uploaded to an unknown server overnight","a":0},{"t":"The scheduled nightly backup runs at 01:00","a":1},{"t":"Antivirus is suddenly switched off on several PCs","a":0},{"t":"A user changes their desktop wallpaper","a":1}]}},{"id":"bt_controls","cat":"defend","title":"Layers of Defence","pts":150,"diff":2,"body":"<p>No single defence is enough, so organisations use <b>layers</b>. Security controls come in three kinds: <b>preventive</b> (stop it happening), <b>detective</b> (spot it happening) and <b>corrective</b> (fix things afterwards). Sort these.</p>","h":"1qs6a0rc198","hints":["Alerts and cameras watch and report: they are detective.","Backups and fixes come after the event: corrective. Patching <i>before</i> an attack is preventive, but here the patch follows a discovered flaw."],"widget":"classify","wd":{"options":["Preventive","Detective","Corrective"],"win":"defence in depth","retry":"Stop it, spot it, or fix it?","items":[{"t":"A firewall that blocks unwanted traffic","a":0},{"t":"An alert when 50 logins fail in a minute","a":1},{"t":"Restoring from a clean backup after ransomware","a":2},{"t":"Multi-factor authentication on every account","a":0},{"t":"CCTV in the server room","a":1},{"t":"Installing a patch after a flaw is found","a":2}]}},{"id":"bt_passpol","cat":"defend","title":"Password Policy","pts":125,"diff":2,"body":"<p>You are asked to review a company&rsquo;s password and login rules. Which are good practice and which are bad?</p>","h":"29jytsz1o9p","hints":["Anything that lets attackers guess forever, or that exposes passwords in readable form, is bad.","Properly stored passwords are hashed, so even the company cannot read them."],"widget":"classify","wd":{"options":["Good practice","Bad practice"],"win":"a sensible policy","retry":"Think about what helps an attacker.","items":[{"t":"Block passwords that are on a list of commonly used ones","a":0},{"t":"Allow unlimited login attempts","a":1},{"t":"Offer multi-factor authentication","a":0},{"t":"Store users&rsquo; passwords as plain text","a":1},{"t":"Temporarily lock an account after repeated failed attempts","a":0},{"t":"Email users their password if they forget it","a":1}]}},{"id":"bt_chain","cat":"threat","title":"The Attacker's Journey","pts":175,"diff":3,"body":"<p>Attacks happen in stages, often called the <b>cyber kill chain</b>. Knowing the stages shows defenders where to break the chain. Match each action to its stage.</p>","h":"1ywjjx8g3gr","hints":["Reconnaissance is research and happens first. Stealing the data is the goal and happens last.","Delivery gets the malware to the victim. Installation puts it in place. Command and control is how the attacker talks to it."],"widget":"classify","wd":{"options":["Reconnaissance","Delivery","Installation","Command and control","Actions on objectives"],"win":"break any link and the attack fails","retry":"Follow the story in order: research, deliver, install, control, achieve the goal.","items":[{"t":"The attacker studies the company's staff on social media","a":0},{"t":"A phishing email with a malicious attachment is sent","a":1},{"t":"The malware sets itself up so it survives a reboot","a":2},{"t":"The malware contacts the attacker&rsquo;s server for instructions","a":3},{"t":"Customer data is copied out of the network","a":4}]}}];
+const ENC={"bt_cia":"Q1RGe2NpYV9pc190aGVfZ29hbH0=","bt_alerts":"Q1RGe2ludmVzdGlnYXRlX2JlZm9yZV95b3VfcGFuaWN9","bt_priority":"Q1RGe2ltcGFjdF9hbmRfdXJnZW5jeV9kZWNpZGV9","bt_auth":"Q1RGe3N2Y19iYWNrdXB9","bt_when":"Q1RGezAyOjExOjQ4fQ==","bt_scan":"Q1RGezE5OC41MS4xMDAuOX0=","bt_sqli":"Q1RGezE5Mi4wLjIuODh9","bt_ir":"Q1RGe3ByZXBhcmVfZGV0ZWN0X2NvbnRhaW5fZXJhZGljYXRlX3JlY292ZXJfbGVhcm59","bt_contain":"Q1RGe2lzb2xhdGVfdGhlbl9yZXBvcnR9","bt_phishresp":"Q1RGe3JlcG9ydF9lYXJseV9yZXBvcnRfb2Z0ZW59","bt_ioc":"Q1RGe3Nwb3RfdGhlX2luZGljYXRvcnN9","bt_controls":"Q1RGe2xheWVyc19vZl9kZWZlbmNlfQ==","bt_passpol":"Q1RGe2dvb2RfcGFzc3dvcmRzX2dvb2RfcG9saWN5fQ==","bt_chain":"Q1RGe2tpbGxfY2hhaW5fbGlua3N9"};
+/* ---------- helpers ---------- */
+const A=s=>atob(s);
+const dec=id=>atob(ENC[id]);              // flags that a widget reveals on success
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+/* "loose" flags ignore punctuation/spacing inside the answer: CTF{Angel of the North} == CTF{angel_of_the_north} */
+const normFlag=(f,loose)=>{f=f.trim().toLowerCase();return loose?f.replace(/[^a-z0-9{}]/g,''):f};
+const hashFlag=(f,loose)=>cyrb53(normFlag(f,loose)).toString(36);
+const isMatch=(c,v)=>[].concat(c.h).includes(hashFlag(v,c.loose));
+function toast(t,bad){const el=$('#toast');el.textContent=t;el.className='toast show'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='toast',2600);}
+const CATS=CONFIG.cats;
+
+/* ---------- state ---------- */
+const KEY='cq_state_'+CONFIG.id;
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{team:'',start:0,solved:{},hints:{},ended:false,extra:0};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const params=new URLSearchParams(location.search);
+const baseMin=Math.max(1,parseInt(params.get('minutes'))||CONFIG.minutes||90);
+const duration=()=>(baseMin*60+(S.extra||0))*1000;
+const hintCost=(c,n)=>n<=0?0:(n===1?Math.round(c.pts*.1):Math.round(c.pts*.3));
+const score=()=>Object.values(S.solved).reduce((a,b)=>a+b.pts,0);
+const total=()=>DATA.reduce((a,c)=>a+c.pts,0);
+const timeLeft=()=>S.start?Math.max(0,S.start+duration()-Date.now()):duration();
+const over=()=>S.ended||(S.start&&timeLeft()<=0);
+const fmt=ms=>{const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+/* ---------- boot ---------- */
+function boot(){
+  document.title='CyberQuest – '+CONFIG.name;
+  if(!S.start){$('#welcome').classList.remove('hidden');$('#app').classList.add('hidden');return}
+  $('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');
+  if(params.has('host'))$('#hostbox').classList.remove('hidden');
+  $('#hTeam').textContent=S.team;
+  renderBoard();updateHeader();tick();
+  if(!boot.timer)boot.timer=setInterval(tick,1000);
+  if(typeof initLab==='function')initLab();
+  initTools();
+}
+$('#startbtn').onclick=()=>{
+  const n=$('#teamname').value.trim();
+  if(!n){$('#teamname').focus();toast('Pick a team name first',true);return}
+  S.team=n;S.start=Date.now();S.solved={};S.hints={};S.ended=false;S.extra=0;save();boot();
+};
+$('#teamname').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startbtn').click()});
+
+function updateHeader(){
+  $('#hScore').textContent=score();
+  $('#hSolved').textContent=Object.keys(S.solved).length+'/'+DATA.length;
+  $('#hBar').style.width=(Object.keys(S.solved).length/DATA.length*100)+'%';
+}
+function tick(){
+  const left=timeLeft();
+  $('#hTimer').textContent=S.ended?'DONE':fmt(left);
+  const tb=$('#timerBox');tb.classList.toggle('warn',left<=15*60e3&&left>5*60e3);tb.classList.toggle('crit',left<=5*60e3&&!S.ended);
+  if(!S.ended&&left<=0){S.ended=true;save();showReport(true)}
+}
+
+/* ---------- tabs ---------- */
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const names=$$('#tabs button').map(x=>x.dataset.tab);
+  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  names.forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  if(b.dataset.tab==='lab')setTimeout(()=>$('#tinp')&&$('#tinp').focus(),50);
+};
+
+/* ---------- board ---------- */
+function renderBoard(){
+  let h='';
+  for(const k of Object.keys(CATS)){
+    const list=DATA.filter(c=>c.cat===k);if(!list.length)continue;
+    const done=list.filter(c=>S.solved[c.id]).length;
+    h+=`<div class="cat"><h2>${CATS[k].icon} ${CATS[k].name}</h2><small>${CATS[k].blurb} · ${done}/${list.length}</small></div><div class="grid">`;
+    for(const c of list){
+      const s=S.solved[c.id];
+      h+=`<button class="ch ${s?'done':''}" data-id="${c.id}"><div class="t">${esc(c.title)}</div><div class="m"><span>${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span><span class="pts">${s?'+'+s.pts:c.pts} pts</span></div></button>`;
+    }
+    h+='</div>';
+  }
+  $('#tab-board').innerHTML=h;
+  $$('.ch').forEach(b=>b.onclick=()=>openChallenge(b.dataset.id));
+}
+
+/* ---------- challenge modal ---------- */
+function closeModal(){$('#modal').classList.add('hidden');document.body.style.overflow=''}
+$('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden')&&!$('#mbox').dataset.report)closeModal()});
+
+function openChallenge(id){
+  const c=DATA.find(x=>x.id===id);if(!c)return;
+  const solved=S.solved[id];
+  const mb=$('#mbox');mb.dataset.report='';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <div><span class="tag">${CATS[c.cat].icon} ${CATS[c.cat].name}</span><span class="tag pts">${c.pts} pts</span><span class="tag">${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span></div>
+    <h2 style="margin-top:12px">${esc(c.title)}</h2>
+    <div class="body">${c.body}</div>
+    <div id="widget"></div>
+    <div class="flagrow"><input type="text" id="flagIn" placeholder="CTF{...}" autocomplete="off" spellcheck="false" ${solved?'disabled':''}><button class="btn" id="flagGo" ${solved?'disabled':''}>Submit</button></div>
+    <div class="msg ${solved?'ok':''}" id="flagMsg">${solved?'✓ Solved for '+solved.pts+' points':''}</div>
+    <div class="hints" id="hintBox"></div>`;
+  $('#modal').classList.remove('hidden');document.body.style.overflow='hidden';
+  $('.mclose',mb).onclick=closeModal;
+  renderHints(c);
+  if(c.widget&&WIDGETS[c.widget])WIDGETS[c.widget]($('#widget'),c);
+  const submit=()=>{
+    if(over()){$('#flagMsg').className='msg bad';$('#flagMsg').textContent='Time is up – submissions are closed.';return}
+    const v=$('#flagIn').value;if(!v.trim())return;
+    if(isMatch(c,v)){
+      const pts=Math.max(0,c.pts-hintCost(c,S.hints[id]||0));
+      S.solved[id]={pts,t:Date.now()};save();renderBoard();updateHeader();
+      $('#flagMsg').className='msg ok';$('#flagMsg').textContent='✓ Correct! +'+pts+' points';
+      $('#flagIn').disabled=true;$('#flagGo').disabled=true;toast('🏴 Flag captured! +'+pts);
+      if(Object.keys(S.solved).length===DATA.length)setTimeout(()=>showReport(false),1200);
+    }else{
+      $('#flagMsg').className='msg bad';$('#flagMsg').textContent='✗ Not quite. Check the format and spelling.';
+    }
+  };
+  $('#flagGo').onclick=submit;
+  $('#flagIn').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+  if(!solved)setTimeout(()=>$('#flagIn').focus(),30);
+}
+function renderHints(c){
+  const used=S.hints[c.id]||0;const box=$('#hintBox');
+  let h='';
+  for(let i=0;i<used;i++)h+=`<div class="hint"><b>Hint ${i+1}:</b> ${c.hints[i]}</div>`;
+  if(used<c.hints.length&&!S.solved[c.id]){
+    const cost=hintCost(c,used+1);
+    h+=`<button class="btn sec sm" id="hintBtn">💡 Reveal hint ${used+1} (−${cost} pts)</button>`;
+  }
+  box.innerHTML=h;
+  const b=$('#hintBtn');
+  if(b)b.onclick=()=>{S.hints[c.id]=(S.hints[c.id]||0)+1;save();renderHints(c)};
+}
+
+/* ---------- report ---------- */
+function showReport(timeUp){
+  const rows=DATA.filter(c=>S.solved[c.id]).map(c=>`<tr><td>${esc(c.title)}</td><td>${esc(CATS[c.cat].name)}</td><td>${S.solved[c.id].pts}</td></tr>`).join('');
+  const missed=DATA.filter(c=>!S.solved[c.id]).length;
+  const mb=$('#mbox');mb.dataset.report='1';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <h2>${timeUp?'⏰ Time\'s up!':'📄 Mission report'}</h2>
+    <p class="lead">${esc(CONFIG.name)} · Team <b>${esc(S.team)}</b> · <b style="color:var(--amber)">${score()}</b> / ${total()} points · ${Object.keys(S.solved).length}/${DATA.length} flags${missed?'':' · 🏆 PERFECT'}</p>
+    <table class="sum"><tr><th>Challenge</th><th>Category</th><th>Points</th></tr>${rows||'<tr><td colspan="3">No flags yet – keep hunting!</td></tr>'}</table>
+    <div class="row" style="margin-top:16px"><button class="btn" id="copyRep">📋 Copy summary</button><button class="btn sec" id="closeRep">Close</button></div>
+    <p class="lead" style="font-size:13px">Show this screen to your host to log your score.</p>`;
+  $('#modal').classList.remove('hidden');
+  $('.mclose',mb).onclick=closeModal;$('#closeRep').onclick=closeModal;
+  $('#copyRep').onclick=()=>{
+    const t=`CyberQuest ${CONFIG.name} – Team ${S.team}: ${score()}/${total()} pts, ${Object.keys(S.solved).length}/${DATA.length} flags`;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied!'),()=>toast(t));
+  };
+}
+$('#reportBtn').onclick=()=>showReport(false);
+$('#finishBtn').onclick=()=>{if(confirm('Finish now? Your clock stops and submissions close.')){S.ended=true;S.endedAt=Date.now();save();tick();showReport(false)}};
+$('#hostPlus').onclick=()=>{S.extra=(S.extra||0)+600;S.ended=false;save();tick();toast('+10 minutes')};
+$('#hostReset').onclick=()=>{if(confirm('Wipe progress in this browser?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}};
+
+const WIDGETS={};
+
+/* =====================================================================
+   COMMON WIDGETS – reusable interactive challenge components.
+   A challenge opts in with  widget:'name'  and configures it with  wd:{...}
+   Widgets that "reveal" a flag use dec(c.id), so the flag is never stored in plain text.
+   ===================================================================== */
+
+/* classify: pick the right option for every item (also used for "match each X to its Y")
+   wd:{prompt, options:['Legal','Illegal'], items:[{t:'text', a:0}], win:'message'}            */
+WIDGETS.classify=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+
+    w.items.map((it,i)=>`<div class="pickrow" data-i="${i}"><div>${it.t}</div><select><option value="">Choose…</option>${w.options.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select></div>`).join('')+
+    `<p style="margin-top:12px"><button class="btn sm" id="clGo">Check answers</button></p><div class="res" id="clR"></div>`;
+  $('#clGo',el).onclick=()=>{
+    const R=$('#clR',el),rows=$$('.pickrow',el);
+    if(rows.some(r=>$('select',r).value==='')){R.className='res bad';R.textContent='Answer every row first.';return}
+    let ok=0;
+    rows.forEach((r,i)=>{const good=+$('select',r).value===w.items[i].a;if(good)ok++;r.classList.toggle('ok',good);r.classList.toggle('no',!good)});
+    if(ok===rows.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – '+(w.win||'all correct')+'. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+rows.length+' correct – the red rows are wrong. '+(w.retry||'Think again.')}
+  };
+};
+
+/* order: put the steps in the right order (wd:{prompt, items:['first','second',...]} given in CORRECT order) */
+WIDGETS.order=(el,c)=>{
+  const w=c.wd,n=w.items.length;
+  let seed=cyrb53(c.id)%2147483647||7;const rnd=()=>(seed=seed*48271%2147483647)/2147483647;
+  let idx=[...Array(n).keys()];
+  do{for(let i=n-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}}while(idx.every((v,i)=>v===i)||idx[0]===0);
+  const draw=()=>{
+    $('#ordL',el).innerHTML=idx.map((v,p)=>`<li><span>${w.items[v]}</span><button data-p="${p}" data-d="-1" aria-label="Move up">▲</button><button data-p="${p}" data-d="1" aria-label="Move down">▼</button></li>`).join('');
+  };
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+`<ol class="ordl" id="ordL"></ol><p><button class="btn sm" id="ordGo">Check order</button></p><div class="res" id="ordR"></div>`;
+  draw();
+  $('#ordL',el).onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const p=+b.dataset.p,q=p+ +b.dataset.d;if(q<0||q>=n)return;
+    [idx[p],idx[q]]=[idx[q],idx[p]];draw();
+  };
+  $('#ordGo',el).onclick=()=>{
+    const R=$('#ordR',el),ok=idx.filter((v,p)=>v===p).length;
+    if(ok===n){R.className='res ok';R.innerHTML='Perfect order. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+' of '+n+' are in the right place. '+(w.retry||'Keep shuffling.')}
+  };
+};
+
+/* logs: searchable log viewer with a live match counter (wd:{lines:[...], hint:'…'}) */
+WIDGETS.logs=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=`<div class="sbar"><input type="text" id="lgQ" placeholder="${esc(w.placeholder||'Filter lines… (e.g. FAILED)')}" autocomplete="off" spellcheck="false"><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgRe"> regex</label><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgI" checked> ignore case</label><span id="lgN"></span></div><div class="logv" id="lgV"></div>`;
+  const draw=()=>{
+    const q=$('#lgQ',el).value,re=$('#lgRe',el).checked,ic=$('#lgI',el).checked;let test=()=>true,rx=null;
+    if(q){try{rx=new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g');test=l=>{rx.lastIndex=0;return rx.test(l)}}catch(e){$('#lgN',el).textContent='bad regex';return}}
+    const rows=w.lines.filter(test);
+    $('#lgV',el).innerHTML=rows.map(l=>{const s=esc(l);if(!rx)return s;rx.lastIndex=0;return esc(l).replace(new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g'),m=>'<mark>'+m+'</mark>')}).join('\n')||'(no matching lines)';
+    $('#lgN',el).textContent=rows.length+' / '+w.lines.length+' lines';
+  };
+  ['input','change'].forEach(ev=>el.addEventListener(ev,draw));draw();
+};
+
+/* ---- carried over from the original CyberQuest ---- */
+
+/* SQL injection login simulator (fake app, fake DB) */
+WIDGETS.sqli=(el,c)=>{
+  const w=c.wd||{};
+  el.innerHTML=`<div class="loginbox"><b>${w.title||'🏦 NovaBank Staff Portal'}</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <label>Username</label><input type="text" id="sqU" autocomplete="off" spellcheck="false">
+    <label>Password</label><input type="text" id="sqP" autocomplete="off" spellcheck="false">
+    <p style="margin:12px 0 0"><button class="btn sm" id="sqGo">Log in</button></p>
+    <div class="q" id="sqQ"></div><div class="res" id="sqR"></div></div>`;
+  const run=()=>{
+    const u=$('#sqU').value,p=$('#sqP').value;
+    $('#sqQ').textContent="SELECT * FROM users WHERE username='"+u+"' AND password='"+p+"';";
+    const R=$('#sqR');
+    const taut=/'\s*or\s+(['"]?)(\w+)\1\s*=\s*(['"]?)\2\3?/i;
+    const bypass=/^\s*admin\s*'\s*(--|#|\/\*)/i.test(u)||taut.test(u)||taut.test(p);
+    if(bypass){R.className='res ok';R.innerHTML='✔ Query returned a row. Logged in as <b>admin</b>.<br>Secret: <b>'+esc(dec(c.id))+'</b><br><span style="color:var(--dim)">The fix: parameterised queries, never string concatenation.</span>'}
+    else if((u+p).includes("'")){R.className='res bad';R.textContent="ERROR 1064 (42000): You have an error in your SQL syntax; check the manual near '"+(u+p).split("'").slice(1).join("'")+"' – the database just told you it's injectable!"}
+    else{R.className='res bad';R.textContent='✘ Invalid username or password.'}
+  };
+  $('#sqGo').onclick=run;
+  ['sqU','sqP'].forEach(i=>$('#'+i).addEventListener('keydown',e=>{if(e.key==='Enter')run()}));
+};
+
+/* Cookie tampering */
+WIDGETS.cookie=(el,c)=>{
+  const orig=btoa(JSON.stringify({user:'guest',role:'user'}));
+  el.innerHTML=`<div class="loginbox"><b>🖥 NovaCorp Intranet</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <p style="margin:8px 0;color:var(--dim);font-size:14px">You're logged in as <b>guest</b>. The browser sends this on every request:</p>
+    <label>Cookie</label><textarea id="ckV" rows="2" spellcheck="false">session=${orig}</textarea>
+    <p style="margin:12px 0 0"><button class="btn sm" id="ckGo">GET /admin</button> <button class="btn sec sm" id="ckReset">Reset</button></p>
+    <div class="res" id="ckR"></div></div>`;
+  $('#ckReset').onclick=()=>{$('#ckV').value='session='+orig;$('#ckR').textContent=''};
+  $('#ckGo').onclick=()=>{
+    const R=$('#ckR');
+    try{
+      const m=$('#ckV').value.trim().match(/^session=(.+)$/);if(!m)throw 0;
+      const o=JSON.parse(atob(m[1].trim()));
+      if(o&&o.role==='admin'){R.className='res ok';R.innerHTML='HTTP/1.1 200 OK<br>Welcome to the admin panel, '+esc(o.user||'?')+'.<br>Flag: <b>'+esc(dec(c.id))+'</b>'}
+      else{R.className='res bad';R.textContent='HTTP/1.1 403 Forbidden – hello '+(o.user||'?')+', your role is "'+(o.role||'?')+'". Admins only.'}
+    }catch(e){R.className='res bad';R.textContent='HTTP/1.1 400 Bad Request – session cookie could not be parsed.'}
+  };
+};
+
+/* Phish or legit?  wd:{mails:[{from,s,b,a:'P'|'L'}]} */
+WIDGETS.phish=(el,c)=>{
+  const mails=c.wd.mails,ans={},noun=c.wd.noun||'email';
+  el.innerHTML='<p class="lead" style="margin-top:14px">Classify each '+noun+', then submit your verdicts.</p>'+mails.map((m,i)=>`<div class="email"><div class="from">${c.wd.noun?'':'From: '}${m.from}</div><div class="subj">${m.s}</div><div>${m.b}</div><div class="btns"><button data-i="${i}" data-v="P">🎣 Phishing</button><button data-i="${i}" data-v="L">✅ Legit</button></div></div>`).join('')+'<p><button class="btn sm" id="phGo">Submit verdicts</button></p><div class="res" id="phR"></div>';
+  el.onclick=e=>{
+    const b=e.target.closest('.btns button');if(!b)return;
+    ans[b.dataset.i]=b.dataset.v;
+    $$('button',b.parentNode).forEach(x=>x.className=x.dataset.v===ans[b.dataset.i]?(x.dataset.v==='P'?'sel-p':'sel-l'):'');
+  };
+  $('#phGo',el).onclick=()=>{
+    const R=$('#phR',el);
+    if(Object.keys(ans).length<mails.length){R.className='res bad';R.textContent='Answer all '+mails.length+' first.';return}
+    const ok=mails.filter((m,i)=>ans[i]===m.a).length;
+    if(ok===mails.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – sharp eyes! Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+mails.length+' correct. Re-read the sender addresses, the urgency and what each email wants you to do.'}
+  };
+};
+
+/* branch: a choose-your-response scenario. Reaching an ending with end:'win' reveals the flag.
+   wd:{start:'a', nodes:{ a:{text:'…', choices:[{t:'…', to:'b'}]}, b:{end:'win'|'lose', text:'…'} }} */
+WIDGETS.branch=(el,c)=>{
+  const w=c.wd;let cur=w.start;
+  const draw=()=>{
+    const n=w.nodes[cur];
+    if(n.end){
+      const win=n.end==='win';
+      el.innerHTML=`<div class="loginbox"><p>${n.text}</p><p class="res ${win?'ok':'bad'}">${win?'✔ Well handled. Flag: <b>'+esc(dec(c.id))+'</b>':'✘ The attack succeeded.'}</p><p><button class="btn sec sm" id="brR">↺ Start again</button></p></div>`;
+      $('#brR',el).onclick=()=>{cur=w.start;draw()};return;
+    }
+    el.innerHTML=`<div class="loginbox"><p>${n.text}</p>`+n.choices.map((ch,i)=>`<p><button class="btn sec sm" data-i="${i}" style="text-align:left;white-space:normal;height:auto">${ch.t}</button></p>`).join('')+'</div>';
+    $$('button[data-i]',el).forEach(b=>b.onclick=()=>{cur=n.choices[+b.dataset.i].to;draw()});
+  };
+  draw();
+};
+
+
+/* =========== TOOLKIT =========== */
+const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+const MORSE_R=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+const caesar=(s,k)=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)});
+const vig=(s,key,dir)=>{key=key.toLowerCase().replace(/[^a-z]/g,'');if(!key)return 'Enter a key (letters only)';let i=0;return s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;const k=(key.charCodeAt(i++%key.length)-97)*dir;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)})};
+const utf8bytes=s=>[...new TextEncoder().encode(s)];
+const fromBytes=b=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(b))}catch(e){return String.fromCharCode(...b)}};
+const parseHex=s=>{const h=s.replace(/0x|[\s,:]/gi,'');if(!/^([0-9a-f]{2})+$/i.test(h))throw new Error('Not valid hex');return h.match(/../g).map(x=>parseInt(x,16))};
+function md5(str){
+  const bytes=new TextEncoder().encode(str);
+  const K=new Uint32Array(64),S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296);
+  const n=bytes.length,total=((n+8>>6)+1)<<6;
+  const buf=new Uint8Array(total);buf.set(bytes);buf[n]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(total-8,(n*8)>>>0,true);dv.setUint32(total-4,Math.floor(n*8/4294967296),true);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let off=0;off<total;off+=64){
+    const M=new Uint32Array(16);for(let i=0;i<16;i++)M[i]=dv.getUint32(off+i*4,true);
+    let A_=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}
+      else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}
+      else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A_+K[i]+M[g])>>>0;
+      A_=D;D=C;C=B;
+      B=(B+((F<<S[i])|(F>>>(32-S[i]))))>>>0;
+    }
+    a0=(a0+A_)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  const out=new DataView(new ArrayBuffer(16));
+  out.setUint32(0,a0,true);out.setUint32(4,b0,true);out.setUint32(8,c0,true);out.setUint32(12,d0,true);
+  return [...new Uint8Array(out.buffer)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function sha1(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  let h0=0x67452301,h1=0xEFCDAB89,h2=0x98BADCFE,h3=0x10325476,h4=0xC3D2E1F0;const w=new Uint32Array(80);
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<80;i++){const x=w[i-3]^w[i-8]^w[i-14]^w[i-16];w[i]=(x<<1)|(x>>>31)}
+    let a=h0,bb=h1,c=h2,d=h3,e=h4;
+    for(let i=0;i<80;i++){
+      let f,k;
+      if(i<20){f=(bb&c)|(~bb&d);k=0x5A827999}else if(i<40){f=bb^c^d;k=0x6ED9EBA1}else if(i<60){f=(bb&c)|(bb&d)|(c&d);k=0x8F1BBCDC}else{f=bb^c^d;k=0xCA62C1D6}
+      const tmp=(((a<<5)|(a>>>27))+f+e+k+w[i])>>>0;e=d;d=c;c=((bb<<30)|(bb>>>2))>>>0;bb=a;a=tmp;
+    }
+    h0=(h0+a)>>>0;h1=(h1+bb)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;
+  }
+  return [h0,h1,h2,h3,h4].map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const SHA256K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Uint32Array(64);
+  const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0}
+    let [a,bb,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+SHA256K[i]+w[i])>>>0;
+      const S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;
+    }
+    [a,bb,c,d,e,f,g,h].forEach((v,i)=>H[i]=(H[i]+v)>>>0);
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const HASHES={md5,sha1,sha256};
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const b32enc=s=>{let bits='',o='';for(const b of utf8bytes(s))bits+=b.toString(2).padStart(8,'0');for(let i=0;i<bits.length;i+=5)o+=B32[parseInt(bits.slice(i,i+5).padEnd(5,'0'),2)];while(o.length%8)o+='=';return o};
+const b32dec=s=>{const t=s.toUpperCase().replace(/[^A-Z2-7]/g,'');let bits='';for(const ch of t)bits+=B32.indexOf(ch).toString(2).padStart(5,'0');const out=[];for(let i=0;i+8<=bits.length;i+=8)out.push(parseInt(bits.slice(i,i+8),2));return fromBytes(out)};
+const atbash=s=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(b+25-(c.charCodeAt(0)-b))});
+function railPattern(n,len){const p=[];let r=0,d=1;for(let i=0;i<len;i++){p.push(r);if(n>1){if(r===0)d=1;else if(r===n-1)d=-1;r+=d}}return p}
+function railEnc(s,n){const p=railPattern(n,s.length);return [...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b).map(i=>s[i]).join('')}
+function railDec(s,n){const p=railPattern(n,s.length),order=[...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b),out=[];order.forEach((pos,i)=>out[pos]=s[i]);return out.join('')}
+function freqTable(s){
+  const t=s.toUpperCase().replace(/[^A-Z]/g,''),m={};for(const c of t)m[c]=(m[c]||0)+1;
+  const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  if(!rows.length)return 'No letters found.';
+  return 'Letters: '+t.length+'\n'+rows.map(([c,n])=>c+'  '+String(n).padStart(3)+'  '+(n/t.length*100).toFixed(1).padStart(5)+'%  '+'█'.repeat(Math.round(n/rows[0][1]*30))).join('\n')+'\n\nEnglish: E T A O I N S H R are usually the most common.';
+}
+const bi=s=>{if(!/^\s*-?\d+\s*$/.test(s))throw new Error('Enter whole numbers in a, b and m');return BigInt(s.trim())};
+function modpow(a,b,m){let r=1n;a%=m;while(b>0n){if(b&1n)r=r*a%m;a=a*a%m;b>>=1n}return r}
+function egcd(a,b){if(b===0n)return[a,1n,0n];const[g,x,y]=egcd(b,a%b);return[g,y,x-(a/b)*y]}
+const gcd=(a,b)=>{a=a<0n?-a:a;b=b<0n?-b:b;while(b){[a,b]=[b,a%b]}return a};
+function modinv(a,m){const[g,x]=egcd(((a%m)+m)%m,m);if(g!==1n)throw new Error('No inverse: gcd(a,m) = '+g);return((x%m)+m)%m}
+function factorise(n){if(n<2n)throw new Error('Enter a number ≥ 2');const f=[];let d=2n;while(d*d<=n&&d<10000000n){while(n%d===0n){f.push(d);n/=d}d+=d===2n?1n:2n}if(n>1n)f.push(n);return f}
+
+const TOOLS=[
+  ['Base64 →',s=>fromBytes([...atob(s.trim())].map(c=>c.charCodeAt(0)))],
+  ['→ Base64',s=>btoa(String.fromCharCode(...utf8bytes(s)))],
+  ['Base32 →',s=>b32dec(s)],
+  ['→ Base32',s=>b32enc(s)],
+  ['Hex →',s=>fromBytes(parseHex(s))],
+  ['→ Hex',s=>utf8bytes(s).map(b=>b.toString(16).padStart(2,'0')).join(' ')],
+  ['Binary →',s=>fromBytes(s.replace(/[^01]/g,'').match(/.{8}/g).map(b=>parseInt(b,2)))],
+  ['→ Binary',s=>utf8bytes(s).map(b=>b.toString(2).padStart(8,'0')).join(' ')],
+  ['Decimal →',s=>fromBytes(s.trim().split(/[\s,]+/).map(Number))],
+  ['→ Decimal',s=>utf8bytes(s).join(' ')],
+  ['Morse →',s=>s.trim().split(/\s*\/\s*|\s{3,}/).map(w=>w.split(/\s+/).map(x=>MORSE_R[x]||'?').join('')).join(' ')],
+  ['→ Morse',s=>s.toUpperCase().split(' ').map(w=>[...w].map(c=>MORSE[c]||'').filter(Boolean).join(' ')).join(' / ')],
+  ['ROT13',s=>caesar(s,13)],
+  ['Atbash',s=>atbash(s)],
+  ['URL decode',s=>decodeURIComponent(s)],
+  ['→ URL encode',s=>encodeURIComponent(s)],
+  ['Reverse',s=>[...s].reverse().join('')],
+  ['Letter frequency',s=>freqTable(s)],
+  ['MD5',s=>md5(s.replace(/[\r\n]+$/,''))],
+  ['SHA-1',s=>sha1(s.replace(/[\r\n]+$/,''))],
+  ['SHA-256',s=>sha256(s.replace(/[\r\n]+$/,''))]
+];
+function initTools(){
+  if(initTools.done)return;initTools.done=true;
+  const out=v=>{$('#tkOut').value=v};
+  const safe=f=>{try{out(f())}catch(e){out('⚠ '+(e.message||'Could not process that input'))}};
+  const row=$('#tkBtns');
+  TOOLS.forEach(([n,f])=>{const b=document.createElement('button');b.className='btn sec sm';b.textContent=n;b.onclick=()=>safe(()=>f($('#tkIn').value));row.appendChild(b)});
+  $('#tkSwap').onclick=()=>{$('#tkIn').value=$('#tkOut').value;out('')};
+  $('#cGo').onclick=()=>safe(()=>caesar($('#tkIn').value,+$('#cShift').value||0));
+  $('#cBrute').onclick=()=>safe(()=>{const s=$('#tkIn').value;let r='';for(let k=1;k<=25;k++)r+='shift '+String(k).padStart(2)+': '+caesar(s,k)+'\n';return r});
+  $('#vEnc').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,1));
+  $('#vDec').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,-1));
+  const rails=()=>{const n=+$('#rRails').value;if(!(n>=2&&n<=10))throw new Error('Rails must be 2–10');return n};
+  $('#rEnc').onclick=()=>safe(()=>railEnc($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#rDec').onclick=()=>safe(()=>railDec($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#xGo').onclick=()=>safe(()=>{const k=parseInt($('#xKey').value,16);if(isNaN(k))throw new Error('Enter a key like 2a');return fromBytes(parseHex($('#tkIn').value).map(b=>b^k))});
+  $('#xBrute').onclick=()=>safe(()=>{const b=parseHex($('#tkIn').value);let r='';for(let k=0;k<256;k++){const t=b.map(x=>x^k);const s=String.fromCharCode(...t);if(/^[\x20-\x7e\n]+$/.test(s))r+='key '+k.toString(16).padStart(2,'0')+': '+s+'\n'}return r||'No fully printable results.'});
+  $('#hOne').onclick=()=>safe(()=>HASHES[$('#hAlg').value]($('#tkIn').value.replace(/[\r\n]+$/,'')));
+  $('#hGo').onclick=()=>safe(()=>{
+    const alg=$('#hAlg').value,len={md5:32,sha1:40,sha256:64}[alg];
+    const t=$('#hTarget').value.trim().toLowerCase();if(!new RegExp('^[0-9a-f]{'+len+'}$').test(t))throw new Error('For '+alg.toUpperCase()+' the target must be '+len+' hex characters');
+    const salt=$('#hSalt').value,pre=$('#hSaltPos').value==='pre',H=HASHES[alg];
+    const words=$('#tkIn').value.split(/\r?\n/).map(w=>w.trim()).filter(Boolean);
+    const hit=words.find(w=>H(pre?salt+w:w+salt)===t);
+    return hit?'🎯 MATCH: '+hit:'No match in '+words.length+' words.';
+  });
+  $('#nPow').onclick=()=>safe(()=>{const m=bi($('#nM').value);if(m<=0n)throw new Error('m must be positive');return String(modpow(bi($('#nA').value),bi($('#nB').value),m))});
+  $('#nInv').onclick=()=>safe(()=>String(modinv(bi($('#nA').value),bi($('#nM').value))));
+  $('#nGcd').onclick=()=>safe(()=>String(gcd(bi($('#nA').value),bi($('#nB').value))));
+  $('#nFac').onclick=()=>safe(()=>{const a=bi($('#nA').value);return a+' = '+factorise(a).join(' × ')});
+}
+
+
+boot();
+</script>
+</body>
+</html>

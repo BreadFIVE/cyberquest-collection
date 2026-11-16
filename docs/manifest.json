@@ -1,0 +1,92 @@
+[
+ {
+  "id": "blueteam",
+  "name": "SOC Analyst",
+  "subtitle": "Blue team edition",
+  "icon": "🛡️",
+  "out": "docs/cyberquest-blueteam.html",
+  "count": 16,
+  "pts": 2450,
+  "blurb": "Defend the network: triage alerts, read real-style logs, respond to incidents and harden systems."
+ },
+ {
+  "id": "crypto",
+  "name": "Cipher Vault",
+  "subtitle": "Cryptography edition",
+  "icon": "🔐",
+  "out": "docs/cyberquest-crypto.html",
+  "count": 17,
+  "pts": 2125,
+  "blurb": "Classical ciphers, encodings, hashing, passwords and the maths behind RSA."
+ },
+ {
+  "id": "forensics",
+  "name": "Digital Detectives",
+  "subtitle": "Forensics & network edition",
+  "icon": "🔎",
+  "out": "docs/cyberquest-forensics.html",
+  "count": 15,
+  "pts": 2250,
+  "blurb": "File signatures, hidden data, packet captures, email headers and log investigation."
+ },
+ {
+  "id": "linux",
+  "name": "Terminal Trainer",
+  "subtitle": "Linux command line edition",
+  "icon": "🐧",
+  "out": "docs/cyberquest-linux.html",
+  "count": 18,
+  "pts": 2250,
+  "blurb": "Move around, search, copy, move and lock down files in a safe, simulated Linux terminal."
+ },
+ {
+  "id": "network",
+  "name": "Network Navigator",
+  "subtitle": "Networking fundamentals edition",
+  "icon": "📡",
+  "out": "docs/cyberquest-network.html",
+  "count": 20,
+  "pts": 2600,
+  "blurb": "IP addresses, subnets, ports, protocols, the layers of the internet, and a simulated lab of real diagnostic tools."
+ },
+ {
+  "id": "osint",
+  "name": "OSINT Investigator",
+  "subtitle": "Open-source intelligence edition",
+  "icon": "🕵️",
+  "out": "docs/cyberquest-osint.html",
+  "count": 14,
+  "pts": 1775,
+  "blurb": "Find out what the internet already knows: metadata, usernames, domains, archives and search operators."
+ },
+ {
+  "id": "pentest",
+  "name": "Red Team Lab",
+  "subtitle": "Ethical hacking edition",
+  "icon": "💻",
+  "out": "docs/cyberquest-pentest.html",
+  "count": 15,
+  "pts": 2125,
+  "blurb": "The ethical-hacking process on a safe, simulated range: scope, recon, access, escalation and defence."
+ },
+ {
+  "id": "social",
+  "name": "Human Firewall",
+  "subtitle": "Social engineering edition",
+  "icon": "🎣",
+  "out": "docs/cyberquest-social.html",
+  "count": 13,
+  "pts": 1650,
+  "blurb": "Phishing, smishing, psychological tricks, tailgating, phone scams and how people stop them."
+ },
+ {
+  "id": "web",
+  "name": "Web Warriors",
+  "subtitle": "Web security edition",
+  "icon": "🌐",
+  "out": "docs/cyberquest-web.html",
+  "count": 13,
+  "pts": 1875,
+  "blurb": "Hidden fields, forged cookies, SQL injection, XSS and broken access control in safe, simulated websites."
+ }
+]

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberQuest – Human Firewall</title>
+<!--
+  Nice work – you read the source! That's hacker habit #1.
+  Your first flag: CTF{social_engineering_starts_with_people}
+-->
+<style>
+:root{--accent:#ff6fb5}
+:root{
+  --bg:#0a0e14;--panel:#111823;--panel2:#161f2e;--line:#243044;--text:#d6e2f0;--dim:#7e8ea6;
+  --green:var(--accent);--cyan:#38d6ff;--amber:#ffc247;--red:#ff5d6c;--purple:#b58bff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+body{min-height:100vh;background-image:radial-gradient(circle at 15% -10%,#12304a55,transparent 45%),radial-gradient(circle at 100% 0,#2a164a44,transparent 40%)}
+code,pre,.mono{font-family:var(--mono)}
+a{color:var(--cyan)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+header.top{position:sticky;top:0;z-index:20;background:#0a0e14ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.logo{font-family:var(--mono);font-weight:700;color:var(--green);letter-spacing:.5px}
+.logo span{color:var(--dim);font-weight:400}
+.stat{font-family:var(--mono);font-size:14px;background:var(--panel);border:1px solid var(--line);padding:5px 10px;border-radius:8px}
+.stat b{color:var(--cyan)}
+.stat.timer b{color:var(--green);font-size:17px}
+.stat.timer.warn b{color:var(--amber)}
+.stat.timer.crit b{color:var(--red);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.spacer{flex:1}
+.bar{height:3px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .4s}
+
+nav.tabs{display:flex;gap:6px;padding:10px 0;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:7px 14px;border-radius:8px;font-family:var(--mono);font-size:13px}
+nav.tabs button.on{color:var(--bg);background:var(--green);border-color:var(--green);font-weight:700}
+nav.tabs button:hover:not(.on){color:var(--text);border-color:var(--dim)}
+
+/* welcome */
+#welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+.welcome-card{max-width:680px;width:100%}
+.ascii{color:var(--green);font-size:12px;line-height:1.15;margin:0 0 14px;overflow:auto}
+h1,h2,h3{line-height:1.2;margin:0 0 10px}
+h1{font-size:28px}
+h2{font-size:20px}
+.lead{color:var(--dim);margin:0 0 16px}
+input[type=text],input[type=password],textarea,select{width:100%;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:8px;font-family:var(--mono);font-size:14px}
+input:focus,textarea:focus,select:focus{outline:2px solid #38d6ff55;border-color:var(--cyan)}
+textarea{resize:vertical;min-height:70px}
+.btn{background:var(--green);color:#04210f;border:0;padding:10px 18px;border-radius:8px;font-weight:700}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.warn{background:var(--amber);color:#2b1d00}
+.btn.danger{background:var(--red);color:#2b0006}
+ul.rules{padding-left:20px;color:var(--dim)}
+ul.rules li{margin:4px 0}
+.ethics{border-left:3px solid var(--amber);background:#ffc2470f;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+
+/* board */
+.cat{margin:22px 0 8px;display:flex;align-items:baseline;gap:10px}
+.cat h2{margin:0}
+.cat small{color:var(--dim);font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ch{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;color:var(--text);transition:.15s;position:relative}
+.ch:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.ch .t{font-weight:700;margin-bottom:6px}
+.ch .m{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:13px}
+.ch .pts{color:var(--amber)}
+.ch.done{border-color:#39ff8866;background:#0f2a1c}
+.ch.done .t::after{content:" ✓";color:var(--green)}
+.ch.done .pts{color:var(--green)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:820px;padding:22px;position:relative}
+.mclose{position:absolute;top:12px;right:12px;background:var(--panel2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:8px;font-size:18px}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+.tag.pts{color:var(--amber);border-color:#ffc24755}
+.body p{margin:10px 0}
+.body .cipher,.cipher{font-family:var(--mono);background:#0b111a;border:1px dashed var(--cyan);color:var(--cyan);padding:12px;border-radius:8px;word-break:break-all;margin:10px 0;font-size:14px;user-select:all}
+.flagrow{display:flex;gap:8px;margin-top:16px}
+.flagrow input{flex:1}
+.msg{margin-top:10px;font-family:var(--mono);font-size:14px;min-height:20px}
+.msg.ok{color:var(--green)}.msg.bad{color:var(--red)}
+.hints{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.hint{background:#ffc2470f;border-left:3px solid var(--amber);padding:8px 12px;margin:8px 0;border-radius:0 8px 8px 0;font-size:14px}
+pre.code{background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;margin:10px 0}
+pre.hexd{background:#05080c;color:#9fe8b8;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px;margin:10px 0}
+
+/* mock UI components used in challenges */
+.mock{background:#fff;color:#1b1f23;border-radius:12px;padding:14px;margin:12px 0;font-family:var(--sans);font-size:14px}
+.mock .hd{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7b5cff,#2dd4ff);flex:none}
+.mock .who b{display:block}
+.mock .who small{color:#667}
+.photo{height:170px;border-radius:10px;background:linear-gradient(180deg,#26324a,#141b2b);margin:10px 0;position:relative;overflow:hidden;color:#fff}
+.photo .monitor{position:absolute;left:18px;top:18px;width:150px;height:90px;border:4px solid #0a0e14;border-radius:6px;background:#0d2a3b;font:11px var(--mono);padding:6px;color:#6fe}
+.photo .badge{position:absolute;right:26px;top:10px;width:120px;background:#fff;color:#111;border-radius:8px;padding:8px;text-align:center;font:11px var(--mono);box-shadow:0 4px 12px #0008}
+.photo .badge::before{content:"";display:block;width:26px;height:6px;background:#999;border-radius:4px;margin:-14px auto 8px}
+.photo .badge .nm{font-weight:700;font-size:13px}
+.photo .desk{position:absolute;left:0;right:0;bottom:0;height:34px;background:#3a2c20}
+.photo .note{position:absolute;left:190px;bottom:42px;background:#ffe66d;color:#333;padding:6px 8px;font:11px var(--mono);transform:rotate(-4deg);border-radius:2px}
+.mock .feed{border-top:1px solid #e3e6ea;margin-top:10px;padding-top:10px}
+.exif{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:10px 0}
+.exif td{border-bottom:1px solid var(--line);padding:5px 8px}
+.exif td:first-child{color:var(--dim);width:38%}
+.pkt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:10px 0;display:block;overflow:auto}
+.pkt th,.pkt td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pkt th{color:var(--dim);position:sticky;top:0;background:var(--panel)}
+.pkt tr.tls td{color:#8fa}.pkt tr.dns td{color:#8cf}.pkt tr.ftp td{color:#fc8}
+.email{border:1px solid #d0d7de;border-radius:10px;padding:12px;margin:10px 0;background:#fff;color:#1b1f23}
+.email .from{font-size:13px;color:#555}
+.email .subj{font-weight:700;margin:4px 0}
+.email .btns{display:flex;gap:8px;margin-top:8px}
+.email .btns button{padding:5px 12px;border-radius:6px;border:1px solid #bbb;background:#f4f6f8;color:#222}
+.email .btns button.sel-p{background:#ffdede;border-color:#e33;color:#900;font-weight:700}
+.email .btns button.sel-l{background:#dcfbe7;border-color:#2a7;color:#065;font-weight:700}
+.email a{color:#0969da}
+.loginbox{background:#0b111a;border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.loginbox label{display:block;margin:8px 0 3px;color:var(--dim);font-size:13px}
+.loginbox .q{font-family:var(--mono);font-size:12.5px;color:var(--amber);margin-top:10px;word-break:break-all}
+.loginbox .res{margin-top:10px;font-family:var(--mono);font-size:13px}
+.res.ok{color:var(--green)}.res.bad{color:var(--red)}
+
+/* terminal */
+.term{background:#05080c;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0}
+.term .bar2{background:#0f1622;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
+.term .dot{width:10px;height:10px;border-radius:50%;background:#ff5d6c}.term .dot:nth-child(2){background:#ffc247}.term .dot:nth-child(3){background:#39ff88}
+#tout{height:420px;overflow:auto;padding:12px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;word-break:break-word;color:#cfe}
+#tout .cmd{color:var(--green)}#tout .err{color:var(--red)}#tout .sys{color:var(--cyan)}#tout .dim{color:var(--dim)}
+.tin{display:flex;align-items:center;border-top:1px solid var(--line);padding:8px 12px;gap:8px;font-family:var(--mono);font-size:13px}
+.tin span{color:var(--green);white-space:nowrap}
+.tin input{border:0;background:transparent;padding:0;outline:0!important;flex:1;color:#fff}
+
+/* toolkit */
+.tk{display:grid;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.row label{color:var(--dim);font-size:13px}
+.row input[type=text]{width:140px}
+.row input[type=number]{width:80px;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px;font-family:var(--mono)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--green);color:#04210f;font-weight:700;padding:10px 20px;border-radius:99px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--red);color:#2b0006}
+footer{color:var(--dim);font-size:12px;text-align:center;padding:30px 0 40px}
+table.sum{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+table.sum td,table.sum th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.sum td:last-child,table.sum th:last-child{text-align:right}
+.pace{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:14px}
+.pace b{font-family:var(--mono);color:var(--cyan)}
+@media(max-width:560px){.stat{font-size:12px;padding:4px 7px}h1{font-size:23px}}
+
+/* ---- collection additions ---- */
+.logo small{color:var(--dim);font-weight:400;font-size:12px;margin-left:8px;letter-spacing:1px;text-transform:uppercase}
+.subtitle{font-family:var(--mono);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;font-size:13px;margin:-6px 0 14px}
+.pickrow{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.pickrow select{width:auto;min-width:150px}
+.pickrow.ok{background:#39ff8810}.pickrow.no{background:#ff5d6c12}
+.ordl{list-style:none;padding:0;margin:10px 0}
+.ordl li{display:flex;gap:8px;align-items:center;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:14px}
+.ordl li span{flex:1}
+.ordl li button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;width:30px;height:30px}
+.logv{background:#05080c;border:1px solid var(--line);border-radius:8px;height:280px;overflow:auto;padding:8px 10px;font-family:var(--mono);font-size:12px;white-space:pre;color:#bcd}
+.logv mark{background:#ffc24744;color:#ffe;padding:0 1px}
+.sbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.sbar input[type=text]{flex:1;min-width:180px}
+.sbar span{font-family:var(--mono);font-size:13px;color:var(--dim)}
+.serp{background:#fff;color:#1b1f23;border-radius:10px;padding:12px 14px;margin:10px 0;font-family:var(--sans)}
+.serp .r{margin:10px 0}.serp .r a{color:#1a0dab;font-size:16px;text-decoration:none;display:block}
+.serp .r .u{color:#0b6b2b;font-size:12.5px}.serp .r p{margin:2px 0;color:#444;font-size:13.5px}
+.gmap{display:grid;gap:2px;margin:10px 0;max-width:460px}
+.gmap button{aspect-ratio:1;border:1px solid #2a3850;background:#0e1623;color:var(--text);border-radius:4px;font-size:15px;padding:0;position:relative}
+.gmap button small{position:absolute;left:3px;top:1px;font-size:9px;color:var(--dim);font-family:var(--mono)}
+.gmap button.river{background:#12324d}.gmap button.road{background:#262d3a}.gmap button.pick{outline:2px solid var(--amber)}
+canvas.lsb{width:100%;max-width:520px;image-rendering:pixelated;border:1px solid var(--line);border-radius:8px;display:block;margin:10px 0}
+.profile{border:1px solid #d0d7de;border-radius:10px;padding:10px 12px;margin:8px 0;background:#fff;color:#1b1f23}
+.profile .site{font-size:12px;color:#667;font-family:var(--mono)}
+table.sum td.l,table.sum th.l{text-align:left}
+.whois{white-space:pre;font-family:var(--mono);font-size:12.5px;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto}
+
+</style>
+</head>
+<body>
+<!-- ============ WELCOME ============ -->
+<section id="welcome" class="hidden">
+  <div class="card welcome-card">
+    <pre class="ascii mono">
+  ____      _               ___                   _
+ / ___|   _| |__   ___ _ __ / _ \ _   _  ___  ___| |_
+| |  | | | | '_ \ / _ \ '__| | | | | | |/ _ \/ __| __|
+| |__| |_| | |_) |  __/ |  | |_| | |_| |  __/\__ \ |_
+ \____\__, |_.__/ \___|_|   \__\_\\__,_|\___||___/\__|
+      |___/                                            </pre>
+    <div class="subtitle">Social engineering edition</div>
+    <h1>Welcome, operative.</h1>
+    <p class="lead">A 90-minute deep dive into social engineering: the art of hacking people instead of computers. Spot the scams, understand the psychology behind them, and practise handling live phone calls under pressure.</p>
+    <ul class="rules">
+      <li>Each challenge hides a <b>flag</b> in the format <code>CTF{something_like_this}</code>. Find it, submit it, bank the points.</li>
+      <li>Hints are available but <b>cost points</b> (10% for the first, 30% for the second).</li>
+      <li>You have <b>one clock</b> for everything (90 minutes). Skip hard ones and come back &ndash; harder challenges are worth more.</li>
+      <li>No special tools needed. This quest is about <b>noticing, thinking and responding</b>. Read every detail, and ask yourself what the sender really wants you to do.</li>
+      <li>Some challenges are role-plays: you play the person on the receiving end. You can restart them as often as you like.</li>
+      <li>Work in teams of 2&ndash;4. Talk to each other. That's how real security teams work.</li>
+    </ul>
+    <div class="ethics"><b>&#9878;&#65039; Rules of engagement:</b> Everything here is fictional or simulated. In the real world, only test systems you own or have <b>written permission</b> to test. Unauthorised access is a crime (in the UK, the Computer Misuse Act 1990). Skills for defence, not harm.</div>
+    <label for="teamname" class="lead" style="display:block;margin-bottom:6px">Team name</label>
+    <input id="teamname" type="text" maxlength="30" placeholder="e.g. Null Pointers" autocomplete="off">
+    <p style="margin:16px 0 0"><button class="btn" id="startbtn">&#9654; Start the clock</button></p>
+    <p class="lead" style="margin:12px 0 0;font-size:13px">Progress saves in this browser, so refreshing won't lose your score. Use one device per team.</p>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+<header class="top">
+  <div class="wrap">
+    <div class="topin">
+      <div class="logo">CYBER<span>QUEST</span><small>Human Firewall</small></div>
+      <div class="stat">Team <b id="hTeam">&ndash;</b></div>
+      <div class="spacer"></div>
+      <div class="stat">Score <b id="hScore">0</b></div>
+      <div class="stat">Solved <b id="hSolved">0/0</b></div>
+      <div class="stat timer" id="timerBox">&#9201; <b id="hTimer">90:00</b></div>
+    </div>
+  </div>
+  <div class="bar"><i id="hBar"></i></div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs">
+    <button data-tab="board" class="on">🎯 Challenges</button>
+    <button data-tab="tools">🧰 Toolkit</button>
+    <button data-tab="brief">📋 Briefing</button>
+  </nav>
+
+  <section id="tab-board"></section>
+
+  
+
+  <section id="tab-tools" class="hidden">
+    <h2>&#129520; Toolkit</h2>
+    <p class="lead">Handy decoders, ciphers and hash tools, running entirely in your browser. Real CTF players use sites like CyberChef too &ndash; feel free.</p>
+    <div class="tk">
+      <div class="card">
+        <h3>Encode / decode</h3>
+        <textarea id="tkIn" placeholder="Input&hellip;" rows="4"></textarea>
+        <div class="row" id="tkBtns"></div>
+        <textarea id="tkOut" placeholder="Output&hellip;" rows="4" readonly></textarea>
+        <div class="row"><button class="btn sec sm" id="tkSwap">&#8645; Output &rarr; Input</button></div>
+      </div>
+      <div class="card">
+        <h3>Ciphers</h3>
+        <div class="row">
+          <label>Caesar shift</label><input type="number" id="cShift" value="3" min="1" max="25">
+          <button class="btn sec sm" id="cGo">Shift</button>
+          <button class="btn sec sm" id="cBrute">Try all 25</button>
+        </div>
+        <div class="row">
+          <label>Vigen&egrave;re key</label><input type="text" id="vKey" placeholder="key">
+          <button class="btn sec sm" id="vEnc">Encrypt</button>
+          <button class="btn sec sm" id="vDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>Rail fence rails</label><input type="number" id="rRails" value="3" min="2" max="10">
+          <button class="btn sec sm" id="rEnc">Encrypt</button>
+          <button class="btn sec sm" id="rDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>XOR key (hex byte)</label><input type="text" id="xKey" placeholder="e.g. 2a">
+          <button class="btn sec sm" id="xGo">XOR hex input</button>
+          <button class="btn sec sm" id="xBrute">Brute-force all 256</button>
+        </div>
+        <p class="lead" style="font-size:13px;margin:6px 0 0">Caesar, Vigen&egrave;re and Rail fence read the Input box. XOR expects the input as hex (e.g. <code>1f 2a 3b</code> or <code>1f2a3b</code>).</p>
+      </div>
+      <div class="card">
+        <h3>Hash cracker</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">Paste a wordlist (one word per line) in the Input box above, enter a target hash, pick the algorithm (and a salt if you have one), and see if any word matches. Exactly how attackers use leaked password lists.</p>
+        <div class="row"><input type="text" id="hTarget" placeholder="target hash" style="width:100%;max-width:520px"></div>
+        <div class="row">
+          <label>Algorithm</label><select id="hAlg" style="width:auto"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256">SHA-256</option></select>
+          <label>Salt</label><input type="text" id="hSalt" placeholder="(optional)" style="width:130px">
+          <select id="hSaltPos" style="width:auto"><option value="pre">salt + word</option><option value="post">word + salt</option></select>
+        </div>
+        <div class="row"><button class="btn sec sm" id="hGo">Crack</button><button class="btn sec sm" id="hOne">Just hash my input</button></div>
+      </div>
+      <div class="card">
+        <h3>Number theory helper</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">For RSA and Diffie&ndash;Hellman style maths. Uses big integers, so large numbers are fine.</p>
+        <div class="row"><label>a</label><input type="text" id="nA" style="width:130px"><label>b</label><input type="text" id="nB" style="width:130px"><label>m</label><input type="text" id="nM" style="width:130px"></div>
+        <div class="row">
+          <button class="btn sec sm" id="nPow">a<sup>b</sup> mod m</button>
+          <button class="btn sec sm" id="nInv">inverse of a mod m</button>
+          <button class="btn sec sm" id="nGcd">gcd(a, b)</button>
+          <button class="btn sec sm" id="nFac">factorise a</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-brief" class="hidden">
+    <div class="card">
+      <h2>&#128203; Briefing</h2>
+      <p class="lead">Suggested pacing for your 90 minutes:</p>
+      <div class="pace">
+        <b>0–10 min</b><span>Warm-up: view source, then the phishing email sorter.</span>
+        <b>10–40 min</b><span>Messages and the psychology: smishing, the six red flags, and the five levers of influence.</span>
+        <b>40–75 min</b><span>In person and on the phone: doors, USB sticks, bins, MFA bombing, and two live call scenarios.</span>
+        <b>75–90 min</b><span>Defence: match every attack to its counter-measure. Use hints on anything left.</span>
+      </div>
+      <h3 style="margin-top:20px">Flag tips</h3>
+      <ul class="rules">
+        <li>Flags look like <code>CTF{...}</code>. Not case-sensitive, but spelling and underscores matter.</li>
+        <li>The real attacker never announces themselves. Look for what the message <b>wants you to do</b>, not just how it looks.</li>
+        <li>Words in flags are lowercase, joined with underscores.</li>
+        <li>Stuck? Try the simplest thing first. Most challenges are puzzles, not brute force.</li>
+      </ul>
+      <div class="row" style="margin-top:18px">
+        <button class="btn warn" id="finishBtn">&#127937; Finish &amp; show report</button>
+        <button class="btn sec" id="reportBtn">&#128196; View current report</button>
+      </div>
+      <div id="hostbox" class="hidden" style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <h3>&#128295; Host controls</h3>
+        <div class="row">
+          <button class="btn sec sm" id="hostPlus">+10 minutes</button>
+          <button class="btn danger sm" id="hostReset">Reset this browser</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="wrap">CyberQuest &middot; Human Firewall &middot; every system, person and company here is fictional &middot; stay legal, stay curious</footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="mbox" id="mbox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+const CONFIG={"id":"social","name":"Human Firewall","cats":{"intro":{"name":"Warm-Up","icon":"🚀","blurb":"Start here"},"messages":{"name":"Phishing & Smishing","icon":"📧","blurb":"Messages that bite"},"psych":{"name":"The Psychology","icon":"🧠","blurb":"Why it works"},"person":{"name":"In Person","icon":"🚪","blurb":"Doors, USB sticks and bins"},"calls":{"name":"Phone Calls","icon":"☎️","blurb":"Keep your head under pressure"},"defence":{"name":"Defence","icon":"🛡️","blurb":"Be the human firewall"}},"minutes":90,"lab":null};
+const DATA=[{"id":"se_src","cat":"intro","title":"Read the Room","pts":50,"diff":1,"body":"<p>Even social engineers start by looking at what is in front of them. Right-click this page and choose <b>\"View Page Source\"</b> (or press <code>Ctrl+U</code>). Near the top of the HTML there is a comment with your first flag.</p>","h":"11s0oicqixf","hints":["Look for an HTML comment: <code>&lt;!-- ... --&gt;</code>, near the &lt;head&gt;.","It is in the first 10 lines of the document, right after the &lt;title&gt; tag."],"widget":null},{"id":"se_phish","cat":"intro","title":"Spot the Phish","pts":175,"diff":2,"body":"<p>Six emails landed in a college inbox. Some are real, some are phishing. Classify every one. Check the sender address character by character, the urgency, the greeting, and what each email actually asks you to do.</p>","h":"ovly088q5j","hints":["Compare each sender domain with the real organisation. Look for extra words, swapped letters or a different ending.","Phishing: the bank alert, the parcel fee, and the streaming billing email (note the generic &ldquo;Dear Customer&rdquo; and the look-alike sender domain)."],"widget":"phish","wd":{"mails":[{"from":"Halcyon Bank Security &lt;alerts@halcyon-bank-secure.example&gt;","s":"⚠ Unusual sign-in. Verify within 1 hour or your account will be locked","b":"Dear customer, we noticed a sign-in from a new device. <a href=\"#\" onclick=\"return false\">Verify your identity now</a> or access to your account will be suspended.","a":"P"},{"from":"College IT Service Desk &lt;it-helpdesk@halcyon-college.example&gt;","s":"Planned maintenance: Saturday 02:00 to 04:00","b":"Hi all, student email will be unavailable for two hours this Saturday while we install updates. No action is needed. See the status page on the intranet for details. IT Service Desk","a":"L"},{"from":"ParcelDash &lt;tracking@parcel-dlvr.example&gt;","s":"You missed a delivery. Pay £1.99 to rearrange","b":"We could not deliver your parcel. <a href=\"#\" onclick=\"return false\">Pay the redelivery fee now</a> (card details required) or it will be returned to the sender.","a":"P"},{"from":"Mr J. Patel &lt;j.patel@halcyon-college.example&gt;","s":"Timetable change for Tuesday","b":"Hi all, group B moves to room 14 on Tuesday. You can see the full timetable on the student page you normally use. Mr Patel","a":"L"},{"from":"StreamingPlus Billing &lt;billing@streamingplus-accounts.example&gt;","s":"Payment failed","b":"Dear Customer, your last payment could not be taken. <a href=\"#\" onclick=\"return false\">Update your payment details</a> to keep your subscription.","a":"P"},{"from":"College Library &lt;library@halcyon-college.example&gt;","s":"Your reserved book is ready to collect","b":"Hello, the book you reserved is ready at the library desk until Friday. Bring your student card. No need to reply.","a":"L"}]}},{"id":"se_smish","cat":"messages","title":"Text Message Trap","pts":125,"diff":2,"body":"<p><b>Smishing</b> is phishing by SMS. It works because people trust their phones and read texts quickly. Decide which of these four messages are scams.</p>","h":"25zp4hqtxig","hints":["A genuine message rarely asks you to click, pay or rush. Ask what each one wants you to do.","The two scams ask you for a click or money. The genuine messages send you to a number you already trust (reception or your own card)."],"widget":"phish","wd":{"noun":"text message","mails":[{"from":"+44 7700 900441 (shown as &ldquo;HMRC&rdquo;)","s":"","b":"You are owed a tax refund of £312. Claim within 24 hours: <a href=\"#\" onclick=\"return false\">hmrc-refund.example/claim</a>","a":"P"},{"from":"Halcyon Dental (a number saved in your phone)","s":"","b":"Reminder: your appointment is tomorrow at 10:30. Reply YES to confirm or ring reception if you need to change it.","a":"L"},{"from":"Unknown number","s":"","b":"Hi mum, I dropped my phone in the sink so this is my new number. Can you transfer £250 to this account for me? I will pay you back, promise x","a":"P"},{"from":"Your bank","s":"","b":"A payment of £24.99 to StreamingPlus was made on your card. If this was not you, call the number on the back of your card.","a":"L"}]}},{"id":"se_flags","cat":"messages","title":"Six Red Flags","pts":125,"diff":2,"body":"<p>Scam messages share the same warning signs. Match each snippet to the red flag it shows. Each flag is used exactly once.</p>","h":"1zqzudhivqx","hints":["The sender line is the odd one out. It is about the address, not the words.","Gift cards and codes are a payment method nobody can trace or reverse. Real organisations do not ask for them."],"widget":"classify","wd":{"options":["Urgency","Fake authority","Too good to be true","Request for secrecy","Unusual payment method","Mismatched sender"],"win":"you can name every red flag","retry":"Each red flag is used once. Start with the ones that are clearest.","items":[{"t":"&ldquo;You must act within 30 minutes or your account will be closed.&rdquo;","a":0},{"t":"&ldquo;This is the Principal. I need this done now. Do not question me.&rdquo;","a":1},{"t":"&ldquo;You have won a £500 voucher for completing this two-minute survey!&rdquo;","a":2},{"t":"&ldquo;Please keep this between us for now.&rdquo;","a":3},{"t":"&ldquo;Buy five gift cards and send me the codes.&rdquo;","a":4},{"t":"From: <code>it-support@halcyon-college.example.help-desk-verify.net</code>","a":5}]}},{"id":"se_cialdini","cat":"psych","title":"Levers of Influence","pts":150,"diff":2,"body":"<p>Psychologist Robert Cialdini described the principles that make people say yes. Social engineers use them on purpose. Match each line to the principle it is exploiting.</p><ul class=\"rules\"><li><b>Authority</b>: we obey people who seem important.</li><li><b>Urgency</b>: we act quickly when time is short.</li><li><b>Reciprocity</b>: we feel we owe someone who did us a favour.</li><li><b>Social proof</b>: we copy what everyone else is doing.</li><li><b>Liking</b>: we say yes to people we like or who are like us.</li></ul>","h":"1chnsy4tqs9","hints":["Reciprocity is about repaying a favour. Social proof is about what <i>other people</i> have done.","Liking uses a shared interest to lower your guard."],"widget":"classify","wd":{"options":["Authority","Urgency","Reciprocity","Social proof","Liking"],"win":"you can see the levers","retry":"Each principle is used exactly once.","items":[{"t":"&ldquo;The Principal needs this now. You do not want to be the one who let her down.&rdquo;","a":0},{"t":"&ldquo;Only three hours left to respond, or your mailbox will be deleted.&rdquo;","a":1},{"t":"&ldquo;I carried your boxes upstairs. Could you do me one tiny favour with your login?&rdquo;","a":2},{"t":"&ldquo;Everyone else in your department has already updated their details. You are the last.&rdquo;","a":3},{"t":"&ldquo;No way, you support Sunderland too? Small world! By the way, what is the Wi-Fi password?&rdquo;","a":4}]}},{"id":"se_life","cat":"psych","title":"Anatomy of an Attack","pts":100,"diff":1,"body":"<p>Social engineering attacks are rarely spur-of-the-moment. A typical attack follows a lifecycle. Put the stages in the order an attacker would do them.</p>","h":"1yvdc0cr2mx","hints":["You cannot invent a convincing story until you know who you are talking to.","Trust has to be built before the request, and covering tracks comes at the end."],"widget":"order","wd":{"items":["<b>Research</b> the target using public information (OSINT)","<b>Build a pretext</b>: invent a believable story and identity","<b>Make contact</b> and build trust with the target","<b>Make the request</b> and exploit the access or information gained","<b>Disappear</b> and cover their tracks"],"retry":"Think about what an attacker has to know before they can pick up the phone."}},{"id":"se_door","cat":"person","title":"Door Dilemma","pts":125,"diff":2,"body":"<p><b>Tailgating</b> means following someone through a secure door without using your own badge. It works because people are polite. Decide the best response to each situation.</p>","h":"199hmyjhpdq","hints":["Someone who has used their own badge is not tailgating. Someone who has not should be taken to reception to get a temporary one, however nice they are.","A visitor on their own near sensitive areas is a security matter, not just a politeness matter."],"widget":"classify","wd":{"options":["Politely challenge or escort to reception","Report to security","Hold the door open"],"win":"you know how to handle a door","retry":"Politeness is good. Letting strangers in is not.","items":[{"t":"A smiling person with arms full of boxes asks you to hold the secure door. No badge in sight.","a":0},{"t":"Someone in a hi-vis jacket says they are &ldquo;from the lift company&rdquo; and just need to get to the server room.","a":0},{"t":"A person wearing a <i>Visitor</i> badge is wandering alone near the server room.","a":1},{"t":"A colleague you know well has forgotten their badge.","a":0},{"t":"You and a coworker both tap your own badges and the door opens for each of you.","a":2}]}},{"id":"se_usb","cat":"person","title":"Found in the Car Park","pts":100,"diff":1,"body":"<p>You find a USB stick in the car park labelled <i>\"Payroll 2026\"</i>. Attackers deliberately leave devices like this, hoping curiosity beats caution. Decide whether each reaction is a good idea.</p>","h":"ap52xda0ww","hints":["A stick can run programs the moment it is plugged in, on any computer.","The safe route is to put it in the hands of people who can examine it safely, and to let them know where it came from."],"widget":"classify","wd":{"options":["Good idea","Bad idea"],"win":"curiosity did not win","retry":"Think about what could be on the stick, and which computer you would be trusting.","items":[{"t":"Plug it into your work computer to find out who it belongs to","a":1},{"t":"Hand it to IT or security without plugging it in","a":0},{"t":"Take it home and try it on your own laptop","a":1},{"t":"Tell IT where you found it and when","a":0}]}},{"id":"se_bin","cat":"person","title":"Bin Diving","pts":100,"diff":1,"body":"<p>Attackers sometimes search rubbish bins (\"dumpster diving\") for information. Decide what should be shredded and what is safe to bin or recycle.</p>","h":"1rivsd1inwb","hints":["Names, contact details and passwords are the raw material for a convincing pretext.","Menus and coffee cups tell an attacker nothing about your organisation."],"widget":"classify","wd":{"options":["Shred it","Safe to bin or recycle"],"win":"nothing useful left in the bin","retry":"Ask whether it names people, passwords, customers or internal systems.","items":[{"t":"A printed staff phone list with names and job titles","a":0},{"t":"A sticky note with the Wi-Fi password","a":0},{"t":"A takeaway menu","a":1},{"t":"A draft invoice with a customer&rsquo;s name and address","a":0},{"t":"An empty coffee cup","a":1},{"t":"A visitor sign-in sheet","a":0}]}},{"id":"se_mfa","cat":"calls","title":"Notification Storm","pts":100,"diff":2,"body":"<p>At 2 a.m. your phone buzzes with <b>twelve</b> multi-factor authentication approval requests you did not start. Then a text arrives: <i>\"IT here, please approve the next prompt so we can stop the alerts.\"</i> This is <b>MFA fatigue</b>: the attacker already has your password and is hoping you give in. How should you react?</p>","h":"314iu1ox13","hints":["The prompts only appear because someone has your password. Approving even one gives them the account.","Real IT will never ask you to approve a prompt or read out a code."],"widget":"classify","wd":{"options":["Right response","Wrong response"],"win":"you did not give in","retry":"The attacker needs just one approval. What denies them it?","items":[{"t":"Approve one prompt so they stop","a":1},{"t":"Deny every prompt and report it to IT straight away","a":0},{"t":"Change your password afterwards, from a device you trust","a":0},{"t":"Read out the code to a caller who says they are from IT","a":1},{"t":"Ignore it, it is probably a glitch","a":1}]}},{"id":"se_call","cat":"calls","title":"The Helpdesk Call","pts":200,"diff":3,"body":"<p>You are a junior technician on the IT helpdesk. The phone rings. Choose your responses. You can start again as often as you like. Find the way to handle the call safely.</p>","h":"k2lbqnruu6","hints":["The caller uses authority (the CFO), urgency (two minutes) and secrecy (no ticket) all at once. Each is a red flag.","The safe path is always to verify through a channel <i>you</i> choose, such as the number in the staff directory, never one the caller gives you."],"widget":"branch","wd":{"start":"a","nodes":{"a":{"text":"<b>Caller:</b> &ldquo;Hi, it&rsquo;s Mark from the Executive Office. Mr Davies, our CFO, is locked out of his laptop just before the board meeting. Can you reset his password to <i>Welcome2026</i> and read it back to me? He&rsquo;ll be furious if this isn&rsquo;t done in two minutes. And please don&rsquo;t log it as a ticket.&rdquo;","choices":[{"t":"Do it quickly: a senior person is waiting","to":"lose1"},{"t":"&ldquo;Sorry, I need to verify you first. I&rsquo;ll call you back on the number in the staff directory.&rdquo;","to":"b"},{"t":"Read out a hint for his current password so he can remember it","to":"lose2"}]},"b":{"text":"<b>Caller:</b> &ldquo;There&rsquo;s no time for that! If Mr Davies hears you refused, there will be consequences. Just reset it!&rdquo;","choices":[{"t":"Give in just this once, since he sounds stressed","to":"lose1"},{"t":"Hold firm: &ldquo;I understand it&rsquo;s urgent. I&rsquo;ll call you straight back on the directory number, and Mr Davies can use the self-service reset or come to the desk. I&rsquo;ll log this either way.&rdquo;","to":"win"}]},"lose1":{"end":"lose","text":"You reset the password and read it out. &ldquo;Mark&rdquo; was an attacker who had found the CFO&rsquo;s name on the company website. Within an hour, the CFO&rsquo;s mailbox was being used to send fake payment requests to suppliers."},"lose2":{"end":"lose","text":"The hint gave the attacker a big head start. Combined with details from social media, they guessed the password within minutes."},"win":{"end":"win","text":"You politely refused, called the real directory number, and nobody had called from the Executive Office. You logged the call and reported the attempt. The attack failed, and the pressure tactics (authority, urgency, secrecy) all failed with it."}}}},{"id":"se_vish","cat":"calls","title":"Hang Up, Call Back","pts":150,"diff":2,"body":"<p>Now you are the customer. Your phone rings with a number that looks like your bank. Choose how to respond.</p>","h":"2em1yc3o6qj","hints":["A caller who knows your name and address has not proved anything: that information is easy to find.","The safe move is to end the call yourself and ring a number you already know is genuine."],"widget":"branch","wd":{"start":"a","nodes":{"a":{"text":"<b>Caller:</b> &ldquo;This is the fraud team at Halcyon Bank. We have spotted suspicious payments on your account. To cancel them, we have just sent a six-digit code to your phone. Please read it out to me now.&rdquo;","choices":[{"t":"Read out the code: they are protecting me","to":"lose1"},{"t":"&ldquo;Can you prove who you are?&rdquo;","to":"b"},{"t":"Hang up, then ring the number on the back of your bank card","to":"win"}]},"b":{"text":"<b>Caller:</b> &ldquo;Of course. You are Alex Morgan, your account ends in 4821, and you live in Sunderland. Now, please read out that code quickly before the money leaves.&rdquo;","choices":[{"t":"That proves it. Read out the code","to":"lose1"},{"t":"Information like that is easy to find or buy. Hang up and call the number on the back of your card","to":"win"}]},"lose1":{"end":"lose","text":"That code was the one-time passcode for a payment the attacker was making right then. Banks never ask you to read out a code that they have sent you."},"win":{"end":"win","text":"Correct. You ended the call and rang the number you already trusted. Your real bank had no record of the call. Remember: a caller ID can be faked, and a caller who rushes you is a warning sign."}}}},{"id":"se_fix","cat":"defence","title":"Build the Human Firewall","pts":150,"diff":2,"body":"<p>Technology helps, but people are the last line of defence. Match each attack to the counter-measure that stops it.</p>","h":"1dyfh1n4v22","hints":["Match the ones about <i>physical objects</i> first: the USB stick and the rubbish.","&ldquo;Verify using a number you already know&rdquo; fits any call where someone asks you to do something sensitive."],"widget":"classify","wd":{"options":["Report it and do not click anything","Verify using a number you already know","Challenge politely and follow the badge policy","Hand it to IT unopened","Deny the prompts, report it, then change your password","Shred anything sensitive"],"win":"you are the human firewall","retry":"Each counter-measure is used exactly once.","items":[{"t":"A phishing email arrives asking you to &ldquo;verify&rdquo; your login","a":0},{"t":"A phone call from &ldquo;IT&rdquo; asks you to reset a password","a":1},{"t":"A stranger without a badge follows you through the door","a":2},{"t":"A USB stick turns up in the car park","a":3},{"t":"Your phone fills up with login approval requests at night","a":4},{"t":"An attacker goes through the office rubbish","a":5}]}}];
+const ENC={"se_phish":"Q1RGe3N0b3BfdGhpbmtfcmVwb3J0fQ==","se_smish":"Q1RGe3RleHRzX2Nhbl9waGlzaF90b299","se_flags":"Q1RGe3NpeF9yZWRfZmxhZ3N9","se_cialdini":"Q1RGe2luZmx1ZW5jZV9pc19hX3dlYXBvbn0=","se_life":"Q1RGe3BsYW5fdGhlbl9wb3VuY2V9","se_door":"Q1RGe25vX2JhZGdlX25vX2VudHJ5fQ==","se_usb":"Q1RGe2RvbnRfcGx1Z19pdF9pbn0=","se_bin":"Q1RGe3NocmVkX2l0X2FsbH0=","se_mfa":"Q1RGe2RlbnlfYW5kX3JlcG9ydH0=","se_call":"Q1RGe3ZlcmlmeV9iZWZvcmVfeW91X3Jlc2V0fQ==","se_vish":"Q1RGe2hhbmdfdXBfY2FsbF9iYWNrfQ==","se_fix":"Q1RGe3Blb3BsZV9hcmVfdGhlX2Jlc3RfZGVmZW5jZX0="};
+/* ---------- helpers ---------- */
+const A=s=>atob(s);
+const dec=id=>atob(ENC[id]);              // flags that a widget reveals on success
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+/* "loose" flags ignore punctuation/spacing inside the answer: CTF{Angel of the North} == CTF{angel_of_the_north} */
+const normFlag=(f,loose)=>{f=f.trim().toLowerCase();return loose?f.replace(/[^a-z0-9{}]/g,''):f};
+const hashFlag=(f,loose)=>cyrb53(normFlag(f,loose)).toString(36);
+const isMatch=(c,v)=>[].concat(c.h).includes(hashFlag(v,c.loose));
+function toast(t,bad){const el=$('#toast');el.textContent=t;el.className='toast show'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='toast',2600);}
+const CATS=CONFIG.cats;
+
+/* ---------- state ---------- */
+const KEY='cq_state_'+CONFIG.id;
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{team:'',start:0,solved:{},hints:{},ended:false,extra:0};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const params=new URLSearchParams(location.search);
+const baseMin=Math.max(1,parseInt(params.get('minutes'))||CONFIG.minutes||90);
+const duration=()=>(baseMin*60+(S.extra||0))*1000;
+const hintCost=(c,n)=>n<=0?0:(n===1?Math.round(c.pts*.1):Math.round(c.pts*.3));
+const score=()=>Object.values(S.solved).reduce((a,b)=>a+b.pts,0);
+const total=()=>DATA.reduce((a,c)=>a+c.pts,0);
+const timeLeft=()=>S.start?Math.max(0,S.start+duration()-Date.now()):duration();
+const over=()=>S.ended||(S.start&&timeLeft()<=0);
+const fmt=ms=>{const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+/* ---------- boot ---------- */
+function boot(){
+  document.title='CyberQuest – '+CONFIG.name;
+  if(!S.start){$('#welcome').classList.remove('hidden');$('#app').classList.add('hidden');return}
+  $('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');
+  if(params.has('host'))$('#hostbox').classList.remove('hidden');
+  $('#hTeam').textContent=S.team;
+  renderBoard();updateHeader();tick();
+  if(!boot.timer)boot.timer=setInterval(tick,1000);
+  if(typeof initLab==='function')initLab();
+  initTools();
+}
+$('#startbtn').onclick=()=>{
+  const n=$('#teamname').value.trim();
+  if(!n){$('#teamname').focus();toast('Pick a team name first',true);return}
+  S.team=n;S.start=Date.now();S.solved={};S.hints={};S.ended=false;S.extra=0;save();boot();
+};
+$('#teamname').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startbtn').click()});
+
+function updateHeader(){
+  $('#hScore').textContent=score();
+  $('#hSolved').textContent=Object.keys(S.solved).length+'/'+DATA.length;
+  $('#hBar').style.width=(Object.keys(S.solved).length/DATA.length*100)+'%';
+}
+function tick(){
+  const left=timeLeft();
+  $('#hTimer').textContent=S.ended?'DONE':fmt(left);
+  const tb=$('#timerBox');tb.classList.toggle('warn',left<=15*60e3&&left>5*60e3);tb.classList.toggle('crit',left<=5*60e3&&!S.ended);
+  if(!S.ended&&left<=0){S.ended=true;save();showReport(true)}
+}
+
+/* ---------- tabs ---------- */
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const names=$$('#tabs button').map(x=>x.dataset.tab);
+  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  names.forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  if(b.dataset.tab==='lab')setTimeout(()=>$('#tinp')&&$('#tinp').focus(),50);
+};
+
+/* ---------- board ---------- */
+function renderBoard(){
+  let h='';
+  for(const k of Object.keys(CATS)){
+    const list=DATA.filter(c=>c.cat===k);if(!list.length)continue;
+    const done=list.filter(c=>S.solved[c.id]).length;
+    h+=`<div class="cat"><h2>${CATS[k].icon} ${CATS[k].name}</h2><small>${CATS[k].blurb} · ${done}/${list.length}</small></div><div class="grid">`;
+    for(const c of list){
+      const s=S.solved[c.id];
+      h+=`<button class="ch ${s?'done':''}" data-id="${c.id}"><div class="t">${esc(c.title)}</div><div class="m"><span>${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span><span class="pts">${s?'+'+s.pts:c.pts} pts</span></div></button>`;
+    }
+    h+='</div>';
+  }
+  $('#tab-board').innerHTML=h;
+  $$('.ch').forEach(b=>b.onclick=()=>openChallenge(b.dataset.id));
+}
+
+/* ---------- challenge modal ---------- */
+function closeModal(){$('#modal').classList.add('hidden');document.body.style.overflow=''}
+$('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden')&&!$('#mbox').dataset.report)closeModal()});
+
+function openChallenge(id){
+  const c=DATA.find(x=>x.id===id);if(!c)return;
+  const solved=S.solved[id];
+  const mb=$('#mbox');mb.dataset.report='';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <div><span class="tag">${CATS[c.cat].icon} ${CATS[c.cat].name}</span><span class="tag pts">${c.pts} pts</span><span class="tag">${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span></div>
+    <h2 style="margin-top:12px">${esc(c.title)}</h2>
+    <div class="body">${c.body}</div>
+    <div id="widget"></div>
+    <div class="flagrow"><input type="text" id="flagIn" placeholder="CTF{...}" autocomplete="off" spellcheck="false" ${solved?'disabled':''}><button class="btn" id="flagGo" ${solved?'disabled':''}>Submit</button></div>
+    <div class="msg ${solved?'ok':''}" id="flagMsg">${solved?'✓ Solved for '+solved.pts+' points':''}</div>
+    <div class="hints" id="hintBox"></div>`;
+  $('#modal').classList.remove('hidden');document.body.style.overflow='hidden';
+  $('.mclose',mb).onclick=closeModal;
+  renderHints(c);
+  if(c.widget&&WIDGETS[c.widget])WIDGETS[c.widget]($('#widget'),c);
+  const submit=()=>{
+    if(over()){$('#flagMsg').className='msg bad';$('#flagMsg').textContent='Time is up – submissions are closed.';return}
+    const v=$('#flagIn').value;if(!v.trim())return;
+    if(isMatch(c,v)){
+      const pts=Math.max(0,c.pts-hintCost(c,S.hints[id]||0));
+      S.solved[id]={pts,t:Date.now()};save();renderBoard();updateHeader();
+      $('#flagMsg').className='msg ok';$('#flagMsg').textContent='✓ Correct! +'+pts+' points';
+      $('#flagIn').disabled=true;$('#flagGo').disabled=true;toast('🏴 Flag captured! +'+pts);
+      if(Object.keys(S.solved).length===DATA.length)setTimeout(()=>showReport(false),1200);
+    }else{
+      $('#flagMsg').className='msg bad';$('#flagMsg').textContent='✗ Not quite. Check the format and spelling.';
+    }
+  };
+  $('#flagGo').onclick=submit;
+  $('#flagIn').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+  if(!solved)setTimeout(()=>$('#flagIn').focus(),30);
+}
+function renderHints(c){
+  const used=S.hints[c.id]||0;const box=$('#hintBox');
+  let h='';
+  for(let i=0;i<used;i++)h+=`<div class="hint"><b>Hint ${i+1}:</b> ${c.hints[i]}</div>`;
+  if(used<c.hints.length&&!S.solved[c.id]){
+    const cost=hintCost(c,used+1);
+    h+=`<button class="btn sec sm" id="hintBtn">💡 Reveal hint ${used+1} (−${cost} pts)</button>`;
+  }
+  box.innerHTML=h;
+  const b=$('#hintBtn');
+  if(b)b.onclick=()=>{S.hints[c.id]=(S.hints[c.id]||0)+1;save();renderHints(c)};
+}
+
+/* ---------- report ---------- */
+function showReport(timeUp){
+  const rows=DATA.filter(c=>S.solved[c.id]).map(c=>`<tr><td>${esc(c.title)}</td><td>${esc(CATS[c.cat].name)}</td><td>${S.solved[c.id].pts}</td></tr>`).join('');
+  const missed=DATA.filter(c=>!S.solved[c.id]).length;
+  const mb=$('#mbox');mb.dataset.report='1';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <h2>${timeUp?'⏰ Time\'s up!':'📄 Mission report'}</h2>
+    <p class="lead">${esc(CONFIG.name)} · Team <b>${esc(S.team)}</b> · <b style="color:var(--amber)">${score()}</b> / ${total()} points · ${Object.keys(S.solved).length}/${DATA.length} flags${missed?'':' · 🏆 PERFECT'}</p>
+    <table class="sum"><tr><th>Challenge</th><th>Category</th><th>Points</th></tr>${rows||'<tr><td colspan="3">No flags yet – keep hunting!</td></tr>'}</table>
+    <div class="row" style="margin-top:16px"><button class="btn" id="copyRep">📋 Copy summary</button><button class="btn sec" id="closeRep">Close</button></div>
+    <p class="lead" style="font-size:13px">Show this screen to your host to log your score.</p>`;
+  $('#modal').classList.remove('hidden');
+  $('.mclose',mb).onclick=closeModal;$('#closeRep').onclick=closeModal;
+  $('#copyRep').onclick=()=>{
+    const t=`CyberQuest ${CONFIG.name} – Team ${S.team}: ${score()}/${total()} pts, ${Object.keys(S.solved).length}/${DATA.length} flags`;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied!'),()=>toast(t));
+  };
+}
+$('#reportBtn').onclick=()=>showReport(false);
+$('#finishBtn').onclick=()=>{if(confirm('Finish now? Your clock stops and submissions close.')){S.ended=true;S.endedAt=Date.now();save();tick();showReport(false)}};
+$('#hostPlus').onclick=()=>{S.extra=(S.extra||0)+600;S.ended=false;save();tick();toast('+10 minutes')};
+$('#hostReset').onclick=()=>{if(confirm('Wipe progress in this browser?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}};
+
+const WIDGETS={};
+
+/* =====================================================================
+   COMMON WIDGETS – reusable interactive challenge components.
+   A challenge opts in with  widget:'name'  and configures it with  wd:{...}
+   Widgets that "reveal" a flag use dec(c.id), so the flag is never stored in plain text.
+   ===================================================================== */
+
+/* classify: pick the right option for every item (also used for "match each X to its Y")
+   wd:{prompt, options:['Legal','Illegal'], items:[{t:'text', a:0}], win:'message'}            */
+WIDGETS.classify=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+
+    w.items.map((it,i)=>`<div class="pickrow" data-i="${i}"><div>${it.t}</div><select><option value="">Choose…</option>${w.options.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select></div>`).join('')+
+    `<p style="margin-top:12px"><button class="btn sm" id="clGo">Check answers</button></p><div class="res" id="clR"></div>`;
+  $('#clGo',el).onclick=()=>{
+    const R=$('#clR',el),rows=$$('.pickrow',el);
+    if(rows.some(r=>$('select',r).value==='')){R.className='res bad';R.textContent='Answer every row first.';return}
+    let ok=0;
+    rows.forEach((r,i)=>{const good=+$('select',r).value===w.items[i].a;if(good)ok++;r.classList.toggle('ok',good);r.classList.toggle('no',!good)});
+    if(ok===rows.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – '+(w.win||'all correct')+'. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+rows.length+' correct – the red rows are wrong. '+(w.retry||'Think again.')}
+  };
+};
+
+/* order: put the steps in the right order (wd:{prompt, items:['first','second',...]} given in CORRECT order) */
+WIDGETS.order=(el,c)=>{
+  const w=c.wd,n=w.items.length;
+  let seed=cyrb53(c.id)%2147483647||7;const rnd=()=>(seed=seed*48271%2147483647)/2147483647;
+  let idx=[...Array(n).keys()];
+  do{for(let i=n-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}}while(idx.every((v,i)=>v===i)||idx[0]===0);
+  const draw=()=>{
+    $('#ordL',el).innerHTML=idx.map((v,p)=>`<li><span>${w.items[v]}</span><button data-p="${p}" data-d="-1" aria-label="Move up">▲</button><button data-p="${p}" data-d="1" aria-label="Move down">▼</button></li>`).join('');
+  };
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+`<ol class="ordl" id="ordL"></ol><p><button class="btn sm" id="ordGo">Check order</button></p><div class="res" id="ordR"></div>`;
+  draw();
+  $('#ordL',el).onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const p=+b.dataset.p,q=p+ +b.dataset.d;if(q<0||q>=n)return;
+    [idx[p],idx[q]]=[idx[q],idx[p]];draw();
+  };
+  $('#ordGo',el).onclick=()=>{
+    const R=$('#ordR',el),ok=idx.filter((v,p)=>v===p).length;
+    if(ok===n){R.className='res ok';R.innerHTML='Perfect order. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+' of '+n+' are in the right place. '+(w.retry||'Keep shuffling.')}
+  };
+};
+
+/* logs: searchable log viewer with a live match counter (wd:{lines:[...], hint:'…'}) */
+WIDGETS.logs=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=`<div class="sbar"><input type="text" id="lgQ" placeholder="${esc(w.placeholder||'Filter lines… (e.g. FAILED)')}" autocomplete="off" spellcheck="false"><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgRe"> regex</label><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgI" checked> ignore case</label><span id="lgN"></span></div><div class="logv" id="lgV"></div>`;
+  const draw=()=>{
+    const q=$('#lgQ',el).value,re=$('#lgRe',el).checked,ic=$('#lgI',el).checked;let test=()=>true,rx=null;
+    if(q){try{rx=new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g');test=l=>{rx.lastIndex=0;return rx.test(l)}}catch(e){$('#lgN',el).textContent='bad regex';return}}
+    const rows=w.lines.filter(test);
+    $('#lgV',el).innerHTML=rows.map(l=>{const s=esc(l);if(!rx)return s;rx.lastIndex=0;return esc(l).replace(new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g'),m=>'<mark>'+m+'</mark>')}).join('\n')||'(no matching lines)';
+    $('#lgN',el).textContent=rows.length+' / '+w.lines.length+' lines';
+  };
+  ['input','change'].forEach(ev=>el.addEventListener(ev,draw));draw();
+};
+
+/* ---- carried over from the original CyberQuest ---- */
+
+/* SQL injection login simulator (fake app, fake DB) */
+WIDGETS.sqli=(el,c)=>{
+  const w=c.wd||{};
+  el.innerHTML=`<div class="loginbox"><b>${w.title||'🏦 NovaBank Staff Portal'}</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <label>Username</label><input type="text" id="sqU" autocomplete="off" spellcheck="false">
+    <label>Password</label><input type="text" id="sqP" autocomplete="off" spellcheck="false">
+    <p style="margin:12px 0 0"><button class="btn sm" id="sqGo">Log in</button></p>
+    <div class="q" id="sqQ"></div><div class="res" id="sqR"></div></div>`;
+  const run=()=>{
+    const u=$('#sqU').value,p=$('#sqP').value;
+    $('#sqQ').textContent="SELECT * FROM users WHERE username='"+u+"' AND password='"+p+"';";
+    const R=$('#sqR');
+    const taut=/'\s*or\s+(['"]?)(\w+)\1\s*=\s*(['"]?)\2\3?/i;
+    const bypass=/^\s*admin\s*'\s*(--|#|\/\*)/i.test(u)||taut.test(u)||taut.test(p);
+    if(bypass){R.className='res ok';R.innerHTML='✔ Query returned a row. Logged in as <b>admin</b>.<br>Secret: <b>'+esc(dec(c.id))+'</b><br><span style="color:var(--dim)">The fix: parameterised queries, never string concatenation.</span>'}
+    else if((u+p).includes("'")){R.className='res bad';R.textContent="ERROR 1064 (42000): You have an error in your SQL syntax; check the manual near '"+(u+p).split("'").slice(1).join("'")+"' – the database just told you it's injectable!"}
+    else{R.className='res bad';R.textContent='✘ Invalid username or password.'}
+  };
+  $('#sqGo').onclick=run;
+  ['sqU','sqP'].forEach(i=>$('#'+i).addEventListener('keydown',e=>{if(e.key==='Enter')run()}));
+};
+
+/* Cookie tampering */
+WIDGETS.cookie=(el,c)=>{
+  const orig=btoa(JSON.stringify({user:'guest',role:'user'}));
+  el.innerHTML=`<div class="loginbox"><b>🖥 NovaCorp Intranet</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <p style="margin:8px 0;color:var(--dim);font-size:14px">You're logged in as <b>guest</b>. The browser sends this on every request:</p>
+    <label>Cookie</label><textarea id="ckV" rows="2" spellcheck="false">session=${orig}</textarea>
+    <p style="margin:12px 0 0"><button class="btn sm" id="ckGo">GET /admin</button> <button class="btn sec sm" id="ckReset">Reset</button></p>
+    <div class="res" id="ckR"></div></div>`;
+  $('#ckReset').onclick=()=>{$('#ckV').value='session='+orig;$('#ckR').textContent=''};
+  $('#ckGo').onclick=()=>{
+    const R=$('#ckR');
+    try{
+      const m=$('#ckV').value.trim().match(/^session=(.+)$/);if(!m)throw 0;
+      const o=JSON.parse(atob(m[1].trim()));
+      if(o&&o.role==='admin'){R.className='res ok';R.innerHTML='HTTP/1.1 200 OK<br>Welcome to the admin panel, '+esc(o.user||'?')+'.<br>Flag: <b>'+esc(dec(c.id))+'</b>'}
+      else{R.className='res bad';R.textContent='HTTP/1.1 403 Forbidden – hello '+(o.user||'?')+', your role is "'+(o.role||'?')+'". Admins only.'}
+    }catch(e){R.className='res bad';R.textContent='HTTP/1.1 400 Bad Request – session cookie could not be parsed.'}
+  };
+};
+
+/* Phish or legit?  wd:{mails:[{from,s,b,a:'P'|'L'}]} */
+WIDGETS.phish=(el,c)=>{
+  const mails=c.wd.mails,ans={},noun=c.wd.noun||'email';
+  el.innerHTML='<p class="lead" style="margin-top:14px">Classify each '+noun+', then submit your verdicts.</p>'+mails.map((m,i)=>`<div class="email"><div class="from">${c.wd.noun?'':'From: '}${m.from}</div><div class="subj">${m.s}</div><div>${m.b}</div><div class="btns"><button data-i="${i}" data-v="P">🎣 Phishing</button><button data-i="${i}" data-v="L">✅ Legit</button></div></div>`).join('')+'<p><button class="btn sm" id="phGo">Submit verdicts</button></p><div class="res" id="phR"></div>';
+  el.onclick=e=>{
+    const b=e.target.closest('.btns button');if(!b)return;
+    ans[b.dataset.i]=b.dataset.v;
+    $$('button',b.parentNode).forEach(x=>x.className=x.dataset.v===ans[b.dataset.i]?(x.dataset.v==='P'?'sel-p':'sel-l'):'');
+  };
+  $('#phGo',el).onclick=()=>{
+    const R=$('#phR',el);
+    if(Object.keys(ans).length<mails.length){R.className='res bad';R.textContent='Answer all '+mails.length+' first.';return}
+    const ok=mails.filter((m,i)=>ans[i]===m.a).length;
+    if(ok===mails.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – sharp eyes! Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+mails.length+' correct. Re-read the sender addresses, the urgency and what each email wants you to do.'}
+  };
+};
+
+/* branch: a choose-your-response scenario. Reaching an ending with end:'win' reveals the flag.
+   wd:{start:'a', nodes:{ a:{text:'…', choices:[{t:'…', to:'b'}]}, b:{end:'win'|'lose', text:'…'} }} */
+WIDGETS.branch=(el,c)=>{
+  const w=c.wd;let cur=w.start;
+  const draw=()=>{
+    const n=w.nodes[cur];
+    if(n.end){
+      const win=n.end==='win';
+      el.innerHTML=`<div class="loginbox"><p>${n.text}</p><p class="res ${win?'ok':'bad'}">${win?'✔ Well handled. Flag: <b>'+esc(dec(c.id))+'</b>':'✘ The attack succeeded.'}</p><p><button class="btn sec sm" id="brR">↺ Start again</button></p></div>`;
+      $('#brR',el).onclick=()=>{cur=w.start;draw()};return;
+    }
+    el.innerHTML=`<div class="loginbox"><p>${n.text}</p>`+n.choices.map((ch,i)=>`<p><button class="btn sec sm" data-i="${i}" style="text-align:left;white-space:normal;height:auto">${ch.t}</button></p>`).join('')+'</div>';
+    $$('button[data-i]',el).forEach(b=>b.onclick=()=>{cur=n.choices[+b.dataset.i].to;draw()});
+  };
+  draw();
+};
+
+
+/* =========== TOOLKIT =========== */
+const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+const MORSE_R=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+const caesar=(s,k)=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)});
+const vig=(s,key,dir)=>{key=key.toLowerCase().replace(/[^a-z]/g,'');if(!key)return 'Enter a key (letters only)';let i=0;return s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;const k=(key.charCodeAt(i++%key.length)-97)*dir;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)})};
+const utf8bytes=s=>[...new TextEncoder().encode(s)];
+const fromBytes=b=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(b))}catch(e){return String.fromCharCode(...b)}};
+const parseHex=s=>{const h=s.replace(/0x|[\s,:]/gi,'');if(!/^([0-9a-f]{2})+$/i.test(h))throw new Error('Not valid hex');return h.match(/../g).map(x=>parseInt(x,16))};
+function md5(str){
+  const bytes=new TextEncoder().encode(str);
+  const K=new Uint32Array(64),S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296);
+  const n=bytes.length,total=((n+8>>6)+1)<<6;
+  const buf=new Uint8Array(total);buf.set(bytes);buf[n]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(total-8,(n*8)>>>0,true);dv.setUint32(total-4,Math.floor(n*8/4294967296),true);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let off=0;off<total;off+=64){
+    const M=new Uint32Array(16);for(let i=0;i<16;i++)M[i]=dv.getUint32(off+i*4,true);
+    let A_=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}
+      else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}
+      else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A_+K[i]+M[g])>>>0;
+      A_=D;D=C;C=B;
+      B=(B+((F<<S[i])|(F>>>(32-S[i]))))>>>0;
+    }
+    a0=(a0+A_)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  const out=new DataView(new ArrayBuffer(16));
+  out.setUint32(0,a0,true);out.setUint32(4,b0,true);out.setUint32(8,c0,true);out.setUint32(12,d0,true);
+  return [...new Uint8Array(out.buffer)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function sha1(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  let h0=0x67452301,h1=0xEFCDAB89,h2=0x98BADCFE,h3=0x10325476,h4=0xC3D2E1F0;const w=new Uint32Array(80);
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<80;i++){const x=w[i-3]^w[i-8]^w[i-14]^w[i-16];w[i]=(x<<1)|(x>>>31)}
+    let a=h0,bb=h1,c=h2,d=h3,e=h4;
+    for(let i=0;i<80;i++){
+      let f,k;
+      if(i<20){f=(bb&c)|(~bb&d);k=0x5A827999}else if(i<40){f=bb^c^d;k=0x6ED9EBA1}else if(i<60){f=(bb&c)|(bb&d)|(c&d);k=0x8F1BBCDC}else{f=bb^c^d;k=0xCA62C1D6}
+      const tmp=(((a<<5)|(a>>>27))+f+e+k+w[i])>>>0;e=d;d=c;c=((bb<<30)|(bb>>>2))>>>0;bb=a;a=tmp;
+    }
+    h0=(h0+a)>>>0;h1=(h1+bb)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;
+  }
+  return [h0,h1,h2,h3,h4].map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const SHA256K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Uint32Array(64);
+  const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0}
+    let [a,bb,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+SHA256K[i]+w[i])>>>0;
+      const S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;
+    }
+    [a,bb,c,d,e,f,g,h].forEach((v,i)=>H[i]=(H[i]+v)>>>0);
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const HASHES={md5,sha1,sha256};
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const b32enc=s=>{let bits='',o='';for(const b of utf8bytes(s))bits+=b.toString(2).padStart(8,'0');for(let i=0;i<bits.length;i+=5)o+=B32[parseInt(bits.slice(i,i+5).padEnd(5,'0'),2)];while(o.length%8)o+='=';return o};
+const b32dec=s=>{const t=s.toUpperCase().replace(/[^A-Z2-7]/g,'');let bits='';for(const ch of t)bits+=B32.indexOf(ch).toString(2).padStart(5,'0');const out=[];for(let i=0;i+8<=bits.length;i+=8)out.push(parseInt(bits.slice(i,i+8),2));return fromBytes(out)};
+const atbash=s=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(b+25-(c.charCodeAt(0)-b))});
+function railPattern(n,len){const p=[];let r=0,d=1;for(let i=0;i<len;i++){p.push(r);if(n>1){if(r===0)d=1;else if(r===n-1)d=-1;r+=d}}return p}
+function railEnc(s,n){const p=railPattern(n,s.length);return [...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b).map(i=>s[i]).join('')}
+function railDec(s,n){const p=railPattern(n,s.length),order=[...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b),out=[];order.forEach((pos,i)=>out[pos]=s[i]);return out.join('')}
+function freqTable(s){
+  const t=s.toUpperCase().replace(/[^A-Z]/g,''),m={};for(const c of t)m[c]=(m[c]||0)+1;
+  const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  if(!rows.length)return 'No letters found.';
+  return 'Letters: '+t.length+'\n'+rows.map(([c,n])=>c+'  '+String(n).padStart(3)+'  '+(n/t.length*100).toFixed(1).padStart(5)+'%  '+'█'.repeat(Math.round(n/rows[0][1]*30))).join('\n')+'\n\nEnglish: E T A O I N S H R are usually the most common.';
+}
+const bi=s=>{if(!/^\s*-?\d+\s*$/.test(s))throw new Error('Enter whole numbers in a, b and m');return BigInt(s.trim())};
+function modpow(a,b,m){let r=1n;a%=m;while(b>0n){if(b&1n)r=r*a%m;a=a*a%m;b>>=1n}return r}
+function egcd(a,b){if(b===0n)return[a,1n,0n];const[g,x,y]=egcd(b,a%b);return[g,y,x-(a/b)*y]}
+const gcd=(a,b)=>{a=a<0n?-a:a;b=b<0n?-b:b;while(b){[a,b]=[b,a%b]}return a};
+function modinv(a,m){const[g,x]=egcd(((a%m)+m)%m,m);if(g!==1n)throw new Error('No inverse: gcd(a,m) = '+g);return((x%m)+m)%m}
+function factorise(n){if(n<2n)throw new Error('Enter a number ≥ 2');const f=[];let d=2n;while(d*d<=n&&d<10000000n){while(n%d===0n){f.push(d);n/=d}d+=d===2n?1n:2n}if(n>1n)f.push(n);return f}
+
+const TOOLS=[
+  ['Base64 →',s=>fromBytes([...atob(s.trim())].map(c=>c.charCodeAt(0)))],
+  ['→ Base64',s=>btoa(String.fromCharCode(...utf8bytes(s)))],
+  ['Base32 →',s=>b32dec(s)],
+  ['→ Base32',s=>b32enc(s)],
+  ['Hex →',s=>fromBytes(parseHex(s))],
+  ['→ Hex',s=>utf8bytes(s).map(b=>b.toString(16).padStart(2,'0')).join(' ')],
+  ['Binary →',s=>fromBytes(s.replace(/[^01]/g,'').match(/.{8}/g).map(b=>parseInt(b,2)))],
+  ['→ Binary',s=>utf8bytes(s).map(b=>b.toString(2).padStart(8,'0')).join(' ')],
+  ['Decimal →',s=>fromBytes(s.trim().split(/[\s,]+/).map(Number))],
+  ['→ Decimal',s=>utf8bytes(s).join(' ')],
+  ['Morse →',s=>s.trim().split(/\s*\/\s*|\s{3,}/).map(w=>w.split(/\s+/).map(x=>MORSE_R[x]||'?').join('')).join(' ')],
+  ['→ Morse',s=>s.toUpperCase().split(' ').map(w=>[...w].map(c=>MORSE[c]||'').filter(Boolean).join(' ')).join(' / ')],
+  ['ROT13',s=>caesar(s,13)],
+  ['Atbash',s=>atbash(s)],
+  ['URL decode',s=>decodeURIComponent(s)],
+  ['→ URL encode',s=>encodeURIComponent(s)],
+  ['Reverse',s=>[...s].reverse().join('')],
+  ['Letter frequency',s=>freqTable(s)],
+  ['MD5',s=>md5(s.replace(/[\r\n]+$/,''))],
+  ['SHA-1',s=>sha1(s.replace(/[\r\n]+$/,''))],
+  ['SHA-256',s=>sha256(s.replace(/[\r\n]+$/,''))]
+];
+function initTools(){
+  if(initTools.done)return;initTools.done=true;
+  const out=v=>{$('#tkOut').value=v};
+  const safe=f=>{try{out(f())}catch(e){out('⚠ '+(e.message||'Could not process that input'))}};
+  const row=$('#tkBtns');
+  TOOLS.forEach(([n,f])=>{const b=document.createElement('button');b.className='btn sec sm';b.textContent=n;b.onclick=()=>safe(()=>f($('#tkIn').value));row.appendChild(b)});
+  $('#tkSwap').onclick=()=>{$('#tkIn').value=$('#tkOut').value;out('')};
+  $('#cGo').onclick=()=>safe(()=>caesar($('#tkIn').value,+$('#cShift').value||0));
+  $('#cBrute').onclick=()=>safe(()=>{const s=$('#tkIn').value;let r='';for(let k=1;k<=25;k++)r+='shift '+String(k).padStart(2)+': '+caesar(s,k)+'\n';return r});
+  $('#vEnc').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,1));
+  $('#vDec').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,-1));
+  const rails=()=>{const n=+$('#rRails').value;if(!(n>=2&&n<=10))throw new Error('Rails must be 2–10');return n};
+  $('#rEnc').onclick=()=>safe(()=>railEnc($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#rDec').onclick=()=>safe(()=>railDec($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#xGo').onclick=()=>safe(()=>{const k=parseInt($('#xKey').value,16);if(isNaN(k))throw new Error('Enter a key like 2a');return fromBytes(parseHex($('#tkIn').value).map(b=>b^k))});
+  $('#xBrute').onclick=()=>safe(()=>{const b=parseHex($('#tkIn').value);let r='';for(let k=0;k<256;k++){const t=b.map(x=>x^k);const s=String.fromCharCode(...t);if(/^[\x20-\x7e\n]+$/.test(s))r+='key '+k.toString(16).padStart(2,'0')+': '+s+'\n'}return r||'No fully printable results.'});
+  $('#hOne').onclick=()=>safe(()=>HASHES[$('#hAlg').value]($('#tkIn').value.replace(/[\r\n]+$/,'')));
+  $('#hGo').onclick=()=>safe(()=>{
+    const alg=$('#hAlg').value,len={md5:32,sha1:40,sha256:64}[alg];
+    const t=$('#hTarget').value.trim().toLowerCase();if(!new RegExp('^[0-9a-f]{'+len+'}$').test(t))throw new Error('For '+alg.toUpperCase()+' the target must be '+len+' hex characters');
+    const salt=$('#hSalt').value,pre=$('#hSaltPos').value==='pre',H=HASHES[alg];
+    const words=$('#tkIn').value.split(/\r?\n/).map(w=>w.trim()).filter(Boolean);
+    const hit=words.find(w=>H(pre?salt+w:w+salt)===t);
+    return hit?'🎯 MATCH: '+hit:'No match in '+words.length+' words.';
+  });
+  $('#nPow').onclick=()=>safe(()=>{const m=bi($('#nM').value);if(m<=0n)throw new Error('m must be positive');return String(modpow(bi($('#nA').value),bi($('#nB').value),m))});
+  $('#nInv').onclick=()=>safe(()=>String(modinv(bi($('#nA').value),bi($('#nM').value))));
+  $('#nGcd').onclick=()=>safe(()=>String(gcd(bi($('#nA').value),bi($('#nB').value))));
+  $('#nFac').onclick=()=>safe(()=>{const a=bi($('#nA').value);return a+' = '+factorise(a).join(' × ')});
+}
+
+
+boot();
+</script>
+</body>
+</html>

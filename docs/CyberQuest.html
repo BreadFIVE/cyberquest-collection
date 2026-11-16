@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberQuest – 90 Minute Cyber Challenge</title>
+<!--
+  Nice work – you read the source! That's hacker habit #1.
+  Your first flag: CTF{view_source_ftw}
+-->
+<style>
+:root{
+  --bg:#0a0e14;--panel:#111823;--panel2:#161f2e;--line:#243044;--text:#d6e2f0;--dim:#7e8ea6;
+  --green:#39ff88;--cyan:#38d6ff;--amber:#ffc247;--red:#ff5d6c;--purple:#b58bff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+body{min-height:100vh;background-image:radial-gradient(circle at 15% -10%,#12304a55,transparent 45%),radial-gradient(circle at 100% 0,#2a164a44,transparent 40%)}
+code,pre,.mono{font-family:var(--mono)}
+a{color:var(--cyan)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+header.top{position:sticky;top:0;z-index:20;background:#0a0e14ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.logo{font-family:var(--mono);font-weight:700;color:var(--green);letter-spacing:.5px}
+.logo span{color:var(--dim);font-weight:400}
+.stat{font-family:var(--mono);font-size:14px;background:var(--panel);border:1px solid var(--line);padding:5px 10px;border-radius:8px}
+.stat b{color:var(--cyan)}
+.stat.timer b{color:var(--green);font-size:17px}
+.stat.timer.warn b{color:var(--amber)}
+.stat.timer.crit b{color:var(--red);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.spacer{flex:1}
+.bar{height:3px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .4s}
+
+nav.tabs{display:flex;gap:6px;padding:10px 0;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:7px 14px;border-radius:8px;font-family:var(--mono);font-size:13px}
+nav.tabs button.on{color:var(--bg);background:var(--green);border-color:var(--green);font-weight:700}
+nav.tabs button:hover:not(.on){color:var(--text);border-color:var(--dim)}
+
+/* welcome */
+#welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+.welcome-card{max-width:680px;width:100%}
+.ascii{color:var(--green);font-size:12px;line-height:1.15;margin:0 0 14px;overflow:auto}
+h1,h2,h3{line-height:1.2;margin:0 0 10px}
+h1{font-size:28px}
+h2{font-size:20px}
+.lead{color:var(--dim);margin:0 0 16px}
+input[type=text],input[type=password],textarea,select{width:100%;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:8px;font-family:var(--mono);font-size:14px}
+input:focus,textarea:focus,select:focus{outline:2px solid #38d6ff55;border-color:var(--cyan)}
+textarea{resize:vertical;min-height:70px}
+.btn{background:var(--green);color:#04210f;border:0;padding:10px 18px;border-radius:8px;font-weight:700}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.warn{background:var(--amber);color:#2b1d00}
+.btn.danger{background:var(--red);color:#2b0006}
+ul.rules{padding-left:20px;color:var(--dim)}
+ul.rules li{margin:4px 0}
+.ethics{border-left:3px solid var(--amber);background:#ffc2470f;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+
+/* board */
+.cat{margin:22px 0 8px;display:flex;align-items:baseline;gap:10px}
+.cat h2{margin:0}
+.cat small{color:var(--dim);font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ch{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;color:var(--text);transition:.15s;position:relative}
+.ch:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.ch .t{font-weight:700;margin-bottom:6px}
+.ch .m{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:13px}
+.ch .pts{color:var(--amber)}
+.ch.done{border-color:#39ff8866;background:#0f2a1c}
+.ch.done .t::after{content:" ✓";color:var(--green)}
+.ch.done .pts{color:var(--green)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:820px;padding:22px;position:relative}
+.mclose{position:absolute;top:12px;right:12px;background:var(--panel2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:8px;font-size:18px}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+.tag.pts{color:var(--amber);border-color:#ffc24755}
+.body p{margin:10px 0}
+.body .cipher,.cipher{font-family:var(--mono);background:#0b111a;border:1px dashed var(--cyan);color:var(--cyan);padding:12px;border-radius:8px;word-break:break-all;margin:10px 0;font-size:14px;user-select:all}
+.flagrow{display:flex;gap:8px;margin-top:16px}
+.flagrow input{flex:1}
+.msg{margin-top:10px;font-family:var(--mono);font-size:14px;min-height:20px}
+.msg.ok{color:var(--green)}.msg.bad{color:var(--red)}
+.hints{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.hint{background:#ffc2470f;border-left:3px solid var(--amber);padding:8px 12px;margin:8px 0;border-radius:0 8px 8px 0;font-size:14px}
+pre.code{background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;margin:10px 0}
+pre.hexd{background:#05080c;color:#9fe8b8;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px;margin:10px 0}
+
+/* mock UI components used in challenges */
+.mock{background:#fff;color:#1b1f23;border-radius:12px;padding:14px;margin:12px 0;font-family:var(--sans);font-size:14px}
+.mock .hd{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7b5cff,#2dd4ff);flex:none}
+.mock .who b{display:block}
+.mock .who small{color:#667}
+.photo{height:170px;border-radius:10px;background:linear-gradient(180deg,#26324a,#141b2b);margin:10px 0;position:relative;overflow:hidden;color:#fff}
+.photo .monitor{position:absolute;left:18px;top:18px;width:150px;height:90px;border:4px solid #0a0e14;border-radius:6px;background:#0d2a3b;font:11px var(--mono);padding:6px;color:#6fe}
+.photo .badge{position:absolute;right:26px;top:10px;width:120px;background:#fff;color:#111;border-radius:8px;padding:8px;text-align:center;font:11px var(--mono);box-shadow:0 4px 12px #0008}
+.photo .badge::before{content:"";display:block;width:26px;height:6px;background:#999;border-radius:4px;margin:-14px auto 8px}
+.photo .badge .nm{font-weight:700;font-size:13px}
+.photo .desk{position:absolute;left:0;right:0;bottom:0;height:34px;background:#3a2c20}
+.photo .note{position:absolute;left:190px;bottom:42px;background:#ffe66d;color:#333;padding:6px 8px;font:11px var(--mono);transform:rotate(-4deg);border-radius:2px}
+.mock .feed{border-top:1px solid #e3e6ea;margin-top:10px;padding-top:10px}
+.exif{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:10px 0}
+.exif td{border-bottom:1px solid var(--line);padding:5px 8px}
+.exif td:first-child{color:var(--dim);width:38%}
+.pkt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:10px 0;display:block;overflow:auto}
+.pkt th,.pkt td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pkt th{color:var(--dim);position:sticky;top:0;background:var(--panel)}
+.pkt tr.tls td{color:#8fa}.pkt tr.dns td{color:#8cf}.pkt tr.ftp td{color:#fc8}
+.email{border:1px solid #d0d7de;border-radius:10px;padding:12px;margin:10px 0;background:#fff;color:#1b1f23}
+.email .from{font-size:13px;color:#555}
+.email .subj{font-weight:700;margin:4px 0}
+.email .btns{display:flex;gap:8px;margin-top:8px}
+.email .btns button{padding:5px 12px;border-radius:6px;border:1px solid #bbb;background:#f4f6f8;color:#222}
+.email .btns button.sel-p{background:#ffdede;border-color:#e33;color:#900;font-weight:700}
+.email .btns button.sel-l{background:#dcfbe7;border-color:#2a7;color:#065;font-weight:700}
+.email a{color:#0969da}
+.loginbox{background:#0b111a;border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.loginbox label{display:block;margin:8px 0 3px;color:var(--dim);font-size:13px}
+.loginbox .q{font-family:var(--mono);font-size:12.5px;color:var(--amber);margin-top:10px;word-break:break-all}
+.loginbox .res{margin-top:10px;font-family:var(--mono);font-size:13px}
+.res.ok{color:var(--green)}.res.bad{color:var(--red)}
+
+/* terminal */
+.term{background:#05080c;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0}
+.term .bar2{background:#0f1622;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
+.term .dot{width:10px;height:10px;border-radius:50%;background:#ff5d6c}.term .dot:nth-child(2){background:#ffc247}.term .dot:nth-child(3){background:#39ff88}
+#tout{height:420px;overflow:auto;padding:12px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;word-break:break-word;color:#cfe}
+#tout .cmd{color:var(--green)}#tout .err{color:var(--red)}#tout .sys{color:var(--cyan)}#tout .dim{color:var(--dim)}
+.tin{display:flex;align-items:center;border-top:1px solid var(--line);padding:8px 12px;gap:8px;font-family:var(--mono);font-size:13px}
+.tin span{color:var(--green);white-space:nowrap}
+.tin input{border:0;background:transparent;padding:0;outline:0!important;flex:1;color:#fff}
+
+/* toolkit */
+.tk{display:grid;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.row label{color:var(--dim);font-size:13px}
+.row input[type=text]{width:140px}
+.row input[type=number]{width:80px;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px;font-family:var(--mono)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--green);color:#04210f;font-weight:700;padding:10px 20px;border-radius:99px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--red);color:#2b0006}
+footer{color:var(--dim);font-size:12px;text-align:center;padding:30px 0 40px}
+table.sum{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+table.sum td,table.sum th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.sum td:last-child,table.sum th:last-child{text-align:right}
+.pace{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:14px}
+.pace b{font-family:var(--mono);color:var(--cyan)}
+@media(max-width:560px){.stat{font-size:12px;padding:4px 7px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+
+<!-- ============ WELCOME ============ -->
+<section id="welcome" class="hidden">
+  <div class="card welcome-card">
+    <pre class="ascii mono">
+  ____      _               ___                   _
+ / ___|   _| |__   ___ _ __ / _ \ _   _  ___  ___| |_
+| |  | | | | '_ \ / _ \ '__| | | | | | |/ _ \/ __| __|
+| |__| |_| | |_) |  __/ |  | |_| | |_| |  __/\__ \ |_
+ \____\__, |_.__/ \___|_|   \__\_\\__,_|\___||___/\__|
+      |___/                                            </pre>
+    <h1>Welcome, operative.</h1>
+    <p class="lead">A 90-minute capture-the-flag challenge covering cryptography, OSINT, pen testing, forensics, web security and social engineering.</p>
+    <ul class="rules">
+      <li>Each challenge hides a <b>flag</b> in the format <code>CTF{something_like_this}</code>. Find it, submit it, bank the points.</li>
+      <li>Hints are available but <b>cost points</b> (10% for the first, 30% for the second).</li>
+      <li>You have <b>one clock</b> for everything. Skip hard ones and come back – harder challenges are worth more.</li>
+      <li>The <b>Toolkit</b> tab has crypto helpers and the <b>Pentest Lab</b> tab is a safe, simulated hacking sandbox. Web search is fair game for OSINT, tools and learning.</li>
+      <li>Work in teams of 2–4. Talk to each other. That's how real security teams work.</li>
+    </ul>
+    <div class="ethics"><b>⚖️ Rules of engagement:</b> Everything here is fictional or simulated. In the real world, only test systems you own or have <b>written permission</b> to test. Unauthorised access is a crime (in the UK, the Computer Misuse Act 1990). Skills for defence, not harm.</div>
+    <label for="teamname" class="lead" style="display:block;margin-bottom:6px">Team name</label>
+    <input id="teamname" type="text" maxlength="30" placeholder="e.g. Null Pointers" autocomplete="off">
+    <p style="margin:16px 0 0"><button class="btn" id="startbtn">▶ Start the clock</button></p>
+    <p class="lead" style="margin:12px 0 0;font-size:13px">Progress saves in this browser, so refreshing won't lose your score. Use one device per team.</p>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+<header class="top">
+  <div class="wrap">
+    <div class="topin">
+      <div class="logo">CYBER<span>QUEST</span></div>
+      <div class="stat">Team <b id="hTeam">–</b></div>
+      <div class="spacer"></div>
+      <div class="stat">Score <b id="hScore">0</b></div>
+      <div class="stat">Solved <b id="hSolved">0/0</b></div>
+      <div class="stat timer" id="timerBox">⏱ <b id="hTimer">90:00</b></div>
+    </div>
+  </div>
+  <div class="bar"><i id="hBar"></i></div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs">
+    <button data-tab="board" class="on">🎯 Challenges</button>
+    <button data-tab="lab">💻 Pentest Lab</button>
+    <button data-tab="tools">🧰 Toolkit</button>
+    <button data-tab="brief">📋 Briefing</button>
+  </nav>
+
+  <section id="tab-board"></section>
+
+  <section id="tab-lab" class="hidden">
+    <h2>💻 Pentest Lab</h2>
+    <p class="lead">A simulated Kali-style terminal. Your target is <code>10.10.0.5</code> (NovaTech staging server – an authorised practice target). Type <code>help</code> to see what you can run. Up/Down arrows recall history.</p>
+    <div class="term">
+      <div class="bar2"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:8px">student@kali – simulated</span></div>
+      <div id="tout"></div>
+      <div class="tin"><span id="tprompt">student@kali:~$</span><input id="tinp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    </div>
+  </section>
+
+  <section id="tab-tools" class="hidden">
+    <h2>🧰 Toolkit</h2>
+    <p class="lead">Handy decoders and ciphers, running entirely in your browser. Real CTF players use sites like CyberChef too – feel free.</p>
+    <div class="tk">
+      <div class="card">
+        <h3>Encode / decode</h3>
+        <textarea id="tkIn" placeholder="Input…" rows="4"></textarea>
+        <div class="row" id="tkBtns"></div>
+        <textarea id="tkOut" placeholder="Output…" rows="4" readonly></textarea>
+        <div class="row"><button class="btn sec sm" id="tkSwap">⇅ Output → Input</button></div>
+      </div>
+      <div class="card">
+        <h3>Ciphers</h3>
+        <div class="row">
+          <label>Caesar shift</label><input type="number" id="cShift" value="3" min="1" max="25">
+          <button class="btn sec sm" id="cGo">Shift</button>
+          <button class="btn sec sm" id="cBrute">Try all 25</button>
+        </div>
+        <div class="row">
+          <label>Vigenère key</label><input type="text" id="vKey" placeholder="key">
+          <button class="btn sec sm" id="vEnc">Encrypt</button>
+          <button class="btn sec sm" id="vDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>XOR key (hex byte)</label><input type="text" id="xKey" placeholder="e.g. 2a">
+          <button class="btn sec sm" id="xGo">XOR hex input</button>
+          <button class="btn sec sm" id="xBrute">Brute-force all 256</button>
+        </div>
+        <p class="lead" style="font-size:13px;margin:6px 0 0">Caesar &amp; Vigenère read the Input box. XOR expects the input as hex (e.g. <code>1f 2a 3b</code> or <code>1f2a3b</code>).</p>
+      </div>
+      <div class="card">
+        <h3>MD5 hash cracker</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">Paste a wordlist (one word per line) in the Input box above, enter a target hash, and see if any word matches. Exactly how attackers use leaked password lists.</p>
+        <div class="row"><input type="text" id="hTarget" placeholder="target md5 hash" style="width:100%;max-width:420px"><button class="btn sec sm" id="hGo">Crack</button><button class="btn sec sm" id="hOne">Just hash my input</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-brief" class="hidden">
+    <div class="card">
+      <h2>📋 Briefing</h2>
+      <p class="lead">Suggested pacing for your 90 minutes:</p>
+      <div class="pace">
+        <b>0–10 min</b><span>Warm-up. View source, then quick wins: Caesar, Morse, the badge photo.</span>
+        <b>10–40 min</b><span>Pick a lane each. One person on crypto, one on OSINT, one in the Pentest Lab.</span>
+        <b>40–75 min</b><span>Tackle the 200–300 point challenges. Swap lanes if you're stuck.</span>
+        <b>75–90 min</b><span>Cash in remaining hints for points you can still grab. Double-check spellings.</span>
+      </div>
+      <h3 style="margin-top:20px">Flag tips</h3>
+      <ul class="rules">
+        <li>Flags look like <code>CTF{...}</code>. Not case-sensitive, but spelling and underscores matter.</li>
+        <li>OSINT answers (like a city) are lowercase: <code>CTF{paris}</code>.</li>
+        <li>Stuck? Try the simplest thing first. Most challenges are puzzles, not brute force.</li>
+      </ul>
+      <div class="row" style="margin-top:18px">
+        <button class="btn warn" id="finishBtn">🏁 Finish &amp; show report</button>
+        <button class="btn sec" id="reportBtn">📄 View current report</button>
+      </div>
+      <div id="hostbox" class="hidden" style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <h3>🔧 Host controls</h3>
+        <div class="row">
+          <button class="btn sec sm" id="hostPlus">+10 minutes</button>
+          <button class="btn danger sm" id="hostReset">Reset this browser</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="wrap">CyberQuest · every system, person and company here is fictional · stay legal, stay curious</footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="mbox" id="mbox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const A=s=>atob(s);
+const DATA=[{"id": "intro1", "cat": "intro", "title": "Read the Room", "pts": 50, "diff": 1, "body": "<p>Every good hacker starts the same way: looking at what's already in front of them.</p>\n    <p>Right-click this page (or any page) and choose <b>\"View Page Source\"</b> / <b>\"Inspect\"</b>, or press <code>Ctrl+U</code>. Somewhere near the top of the HTML is a comment with your first flag.</p>", "h": "kvkl7o287e", "hints": ["Look for an HTML comment: <code>&lt;!-- ... --&gt;</code>, near the &lt;head&gt;.", "It's in the first 10 lines of the document, right after the &lt;title&gt; tag."], "widget": null}, {"id": "intro2", "cat": "intro", "title": "Morse Beacon", "pts": 50, "diff": 1, "body": "<p>An old radio beacon keeps repeating this signal. Decode it (use the Toolkit's \"Morse →\" button, or do it by hand):</p>\n    <p class=\"cipher\">-.-. - ..-. { .-. .- -.. .. --- / -.. .- -.-- ... / .- .-. . / -. --- - / --- ...- . .-. }</p>", "h": "1u4agim4n8k", "hints": ["Spaces separate letters, a slash ( / ) separates words.", "Paste the whole string into Toolkit → Morse → and hit the decode button."], "widget": null}, {"id": "c1", "cat": "crypto", "title": "Caesar's Diary", "pts": 75, "diff": 1, "body": "<p>Julius left a note encrypted with his favourite cipher — a simple shift.</p>\n    <p class=\"cipher\">FWI{FDHVDU_LV_KLVWRUB}</p>\n    <p>No one told you the shift amount. Use the Toolkit's \"Try all 25\" button and look for the line that reads as English.</p>", "h": "1fz51asri0a", "hints": ["The flag always starts with the word CTF — look for the shift where the first word reads exactly that.", "The shift value is 19 (or equivalently, decode with a shift of -19 / 7)."], "widget": null}, {"id": "c2", "cat": "crypto", "title": "Vigenère's Vault", "pts": 125, "diff": 2, "body": "<p>A polyalphabetic cipher — tougher than Caesar because each letter can shift by a different amount, repeating a keyword.</p>\n    <p class=\"cipher\">DEJ{IQSJEJEHRLFEMV_EYLGITD}</p>\n    <p>The key is the name of a famous WWII codebreaking site in England. (Hint: it's where Enigma was cracked — two words, no space, all lowercase when you use it in the tool.)</p>", "h": "9tys1uq6ng", "hints": ["The key is <code>bletchleypark</code>.", "Toolkit → Vigenère key: bletchleypark → paste the ciphertext in Input → click Decrypt."], "widget": null}, {"id": "c3", "cat": "crypto", "title": "Base Jumping", "pts": 100, "diff": 1, "body": "<p>You intercept this string from a chat log. It's been encoded, not encrypted — a one-way trip through a few common encodings.</p>\n    <p class=\"cipher\">Q1RGe2xheWVyc19vZl9lbmNvZGluZ30=</p>", "h": "1jc0memyo73", "hints": ["That alphabet (A–Z, a–z, 0–9, +, /, padded with =) is the signature of one very common encoding.", "Toolkit → paste into Input → click \"Base64 →\"."], "widget": null}, {"id": "c4", "cat": "crypto", "title": "XOR Marks the Spot", "pts": 150, "diff": 2, "body": "<p>A malware sample's config string was \"encrypted\" with a single-byte XOR key — a favourite trick in real malware to dodge simple detection.</p>\n    <p class=\"cipher\">28 3f 2d 10 13 04 19 34 02 18 34 05 04 1f 34 0e 05 08 19 12 1b 1f 02 04 05 16</p>\n    <p>You don't know the key. Paste the hex into the Toolkit's XOR tool and click \"Brute-force all 256\" — scan the output for readable English.</p>", "h": "6rkyv5k15s", "hints": ["The key is a single byte between 0x00 and 0xff – the brute-force tool tries every one and shows only fully-printable results.", "The key is 0x6b. Filter the brute-force output for a line starting with CTF."], "widget": null}, {"id": "c5", "cat": "crypto", "title": "The Leaked Hash", "pts": 175, "diff": 2, "body": "<p>A breached database (fictional, obviously) exposed this MD5 password hash for the user <b>j.reyes</b>:</p>\n    <p class=\"cipher\">212276a823a5a6676b39dfb9ba47a3f3</p>\n    <p>You also recovered a fragment of the site's old password policy wordlist. Paste this list into the Toolkit's Input box, put the hash above into \"target md5 hash\", and hit <b>Crack</b>.</p>\n    <pre class=\"code\">sunshine1\ndragonfire\nTr0ub4dor&amp;3\nletmein99\niloveyou2\nsummer2026\nPassw0rd!\nP@ssword123\nmonkeybiz\nqwertyuiop\nflagfinder\nsk8boarding</pre>\n    <p>Once you find the matching word, the flag is <code>CTF{the_word_you_found}</code> (all lowercase, punctuation included exactly as shown).</p>", "h": "2darf8dldy3", "hints": ["MD5 is fast and has no salt here — exactly why real systems use slow, salted hashing like bcrypt instead.", "The matching word is near the bottom of the list."], "widget": null}, {"id": "c6", "cat": "crypto", "title": "RSA by Hand", "pts": 200, "diff": 3, "body": "<p>A tiny (deliberately insecure) RSA key was used to encrypt a single number:</p>\n    <p class=\"cipher\">n = 3233, e = 17, ciphertext c = 2790</p>\n    <p>Real RSA keys are 2048+ bits specifically because factoring n is hard — but 3233 is small enough to factor by hand or with a quick script: <b>3233 = 61 × 53</b>.</p>\n    <ol>\n      <li>Compute φ(n) = (61-1)×(53-1)</li>\n      <li>Find d, the modular inverse of e=17 mod φ(n)</li>\n      <li>Compute m = c<sup>d</sup> mod n — this m is a small number</li>\n    </ol>\n    <p>The flag is <code>CTF{m}</code> using that number, e.g. if m were 7 the flag would be <code>CTF{7}</code>.</p>", "h": "tilza5bngm", "hints": ["φ(3233) = 60 × 52 = 3120. d = 2753 (since 17 × 2753 mod 3120 = 1).", "If hand computation is too slow, use any Python/calculator: pow(2790, 2753, 3233). The result is 65."], "widget": null}, {"id": "c7", "cat": "crypto", "title": "Frequency Analysis", "pts": 150, "diff": 2, "body": "<p>A classic one-to-one substitution cipher — every occurrence of a given letter is always replaced by the same other letter. No key is given, but English is predictable: <b>E</b> and <b>T</b> are almost always the most common letters in a passage of normal text, and single-letter \"words\" are almost always <b>A</b> or <b>I</b>.</p>\n    <p class=\"cipher\">OBC VSUBCZ BSKCJ SD UWPSD JSMBO NDWCJJ HLN WLLI FCZH VWLJCWH PO CFCZH WCOOCZ</p>\n    <p>Count letter frequencies (by hand, or paste into a search engine's \"letter frequency counter\"), start with the most common cipher letter as <b>E</b>, and work outward from there. The decoded sentence spells out the flag once you add underscores: <code>CTF{the_decoded_six_word_phrase}</code> — six words from the plaintext, each joined with <code>_</code> (drop \"the\", keep the rest in order).</p>", "h": "2540xs1t1r1", "hints": ["C is the most frequent cipher letter → it stands for E. O is the next most useful clue: the lone two-letter word 'OBC' at the start must be a common short word.", "Full mapping: a→p, b→a, c→v, d→k, e→c, f→e, g→m, h→b, i→s, j→r, k→i, l→w, m→y, n→d, o→l, p→u, q→x, r→z, s→j, t→o, u→n, v→f, w→t, x→q, y→h, z→g. It decodes to: 'the cipher hides in plain sight unless you look very closely at every letter'."], "widget": null}, {"id": "o1", "cat": "osint", "title": "Metadata Doesn't Lie", "pts": 150, "diff": 2, "body": "<p>A \"whistleblower\" posted this holiday photo publicly, claiming it was taken on a remote island with no internet. EXIF metadata extracted from the file tells a different story:</p>\n    <table class=\"exif\">\n      <tr><td>Camera</td><td>Pixel 8 Pro</td></tr>\n      <tr><td>Date taken</td><td>2026-02-14 10:22:05</td></tr>\n      <tr><td>GPS Latitude</td><td>48.8584° N</td></tr>\n      <tr><td>GPS Longitude</td><td>2.2945° E</td></tr>\n      <tr><td>Software</td><td>Snapseed 2.19</td></tr>\n    </table>\n    <p>Plug those GPS coordinates into any map tool. What famous landmark do they point to? The flag is <code>CTF{landmark_name}</code>, lowercase, one word, no spaces (e.g. <code>CTF{bigben}</code> style — use the main English name of the structure).</p>", "h": "28demkj860r", "hints": ["48.8584° N, 2.2945° E is in central Paris.", "It's the most famous iron tower in the world — one word, no spaces: eiffeltower."], "widget": null}, {"id": "o2", "cat": "osint", "title": "The Giveaway Desk", "pts": 175, "diff": 2, "body": "<p>Your target, \"Novatech Dev Relations,\" posted this desk photo bragging about their \"secure\" home office setup. Security teams call this kind of OSINT a <b>visual leak</b> — find what they gave away.</p>\n    <div class=\"photo\">\n      <div class=\"monitor\">$ ssh devops@10.44.2.11<br>Password: ************<br>Welcome svc-deploy<br>Last login: Feb 2026</div>\n      <div class=\"badge\"><div class=\"nm\">NOVATECH INC.</div>EMP #0417<br>J. KOWALSKI</div>\n      <div class=\"note\">wifi: NovaGuest26!</div>\n      <div class=\"desk\"></div>\n    </div>\n    <p>Three separate pieces of sensitive info are visible in this one photo. Name the category of information that a company badge photo like this usually leaks that's most dangerous for a physical social-engineering attack (not the wifi, not the terminal). The flag is <code>CTF{category}</code> — two words joined with an underscore, describing what a visible staff ID badge with a name and employee number enables an attacker to do in person.</p>", "h": "13xkgt3q9qw", "hints": ["Think about what a photo of a physical access badge — with a visible name and ID — lets someone do at the building door, not online.", "The answer describes copying or faking a badge to walk into a building: badge_cloning."], "widget": null}, {"id": "o3", "cat": "osint", "title": "Username Trail", "pts": 175, "diff": 2, "body": "<p>You're investigating the handle <b>@nova_j_dev</b>, found commenting on a leaked code snippet. Here's what their public profile shows:</p>\n    <div class=\"mock\">\n      <div class=\"hd\"><div class=\"avatar\"></div><div class=\"who\"><b>nova_j_dev</b><small>Joined March 2022 · 204 posts</small></div></div>\n      <p>Bio: \"Backend eng @ a logistics startup 🚚 | ex-NovaTech | coffee-powered | <b>Kraków</b>, Poland 🇵🇱 | he/him\"</p>\n      <div class=\"feed\">\n        <p>📌 Pinned: \"3 years at NovaTech today! Miles the office dog says bye 🐕\" <i>(Feb 2026)</i></p>\n        <p>\"Finally got my <b>CKA</b> cert after failing it in Nov. Kubernetes is no joke 😤\" <i>(Jan 2026)</i></p>\n        <p>\"If anyone's hiring backend devs in Kraków DM me 👀\" <i>(this week)</i></p>\n      </div>\n    </div>\n    <p>From this public info alone: this person just left NovaTech, is Kubernetes-certified, is based in Kraków and is job-hunting right now. What's the single most useful piece of info here for a <b>targeted phishing email</b> pretending to be a recruiter? The flag is <code>CTF{reason}</code> using the two-word reason (underscore-joined) that best explains why — think about what makes a phishing pretext believable, not just which fact is interesting.</p>", "h": "1ruixpfu9nb", "hints": ["A phishing email works best when it matches something the target genuinely wants or expects right now.", "They've publicly said they're looking for a new job this week — that's the open emotional hook: job_hunting."], "widget": null}, {"id": "o4", "cat": "osint", "title": "Reverse the Image", "pts": 150, "diff": 2, "body": "<p>A profile picture keeps reappearing across five \"different\" company accounts that are supposedly unrelated competitors, all posting similar scam investment offers.</p>\n    <p>In a real investigation you'd right-click → \"Search image\" (Google/Bing/TinEye reverse image search) to see everywhere a picture has been used online. Here, imagine you did that and got this result:</p>\n    <pre class=\"code\">Reverse image search results for profile_photo_47.jpg:\n • stockphotosite.com/business-man-smiling-id-88213  (licensed stock photo)\n • \"FinGrow Capital\" - CEO bio page\n • \"Apex Wealth Partners\" - CEO bio page\n • \"Blue Horizon Investments\" - CEO bio page\n • \"Sterling Returns LLC\" - CEO bio page</pre>\n    <p>What does this tell you about these four \"different\" investment companies? One word for the flag: <code>CTF{word}</code> — the term for this kind of coordinated, fake-identity scam operation.</p>", "h": "tbbsn7g1g7", "hints": ["The same stock photo is being used as a real person's face on multiple 'different' company sites — these aren't real executives.", "The term for fake online identities used to deceive, often run by the same operator: sockpuppets."], "widget": null}, {"id": "p1", "cat": "pentest", "title": "Recon: Port Scan", "pts": 125, "diff": 1, "body": "<p>Head to the <b>Pentest Lab</b> tab. Your authorised target is <code>10.10.0.5</code> (\"NovaTech staging\"). Run an Nmap scan to see which ports are open, then connect to the unusual high port with netcat and read the banner it sends you.</p>\n    <pre class=\"code\">nmap 10.10.0.5\nnc 10.10.0.5 31337</pre>", "h": "mpcbbqn9o7", "hints": ["nmap shows an open port in the 30000s that isn't a standard service — netcat into it and read what comes back.", "Command: nc 10.10.0.5 31337 — the banner-id line is your flag."], "widget": null}, {"id": "p2", "cat": "pentest", "title": "Web Recon & Directory Busting", "pts": 150, "diff": 2, "body": "<p>In the Pentest Lab, explore the target's website. Start with the homepage and <code>robots.txt</code> — they often reveal paths the owner doesn't want indexed but forgot to actually protect. Then try a directory brute-force.</p>\n    <pre class=\"code\">curl http://10.10.0.5/\ncurl http://10.10.0.5/robots.txt\ndirb http://10.10.0.5/</pre>\n    <p>One of the disallowed paths in robots.txt is actually browsable. Find it, then find a file inside it, then read that file's contents for a debug marker.</p>", "h": "1h3vc033tqu", "hints": ["robots.txt lists /admin-backup/ — curl that path directly to see a file listing.", "curl http://10.10.0.5/admin-backup/db.sql.bak and look for a line that says 'debug marker'."], "widget": null}, {"id": "p3", "cat": "pentest", "title": "Credential Reuse", "pts": 175, "diff": 2, "body": "<p>That database backup you found in the previous challenge contains more than a debug marker — real backups often leak credentials by accident. Pull the full file and read every line carefully.</p>\n    <pre class=\"code\">curl http://10.10.0.5/admin-backup/db.sql.bak</pre>\n    <p>Use whatever you find to SSH into the server as that service account.</p>\n    <pre class=\"code\">ssh svc_backup@10.10.0.5</pre>\n    <p>Once you're in, you have a foothold — but to prove it, submit the leaked password itself as your flag: <code>CTF{the_password_you_found}</code>, exactly as it appeared in the dump, capitalisation and punctuation included.</p>", "h": "1r9l4rgxus6", "hints": ["The INSERT statement for svc_backup includes a 'note' column — that note is not supposed to be there.", "Username: svc_backup   Password: Backup2026!   →  flag: CTF{Backup2026!}"], "widget": null}, {"id": "p4", "cat": "pentest", "title": "Privilege Escalation", "pts": 225, "diff": 3, "body": "<p>You're logged into the target as <code>svc_backup</code> (from the previous challenge — SSH in first if you haven't). This account is low-privilege, but sysadmins sometimes grant specific <code>sudo</code> rights without thinking through the consequences. Check what you're allowed to run as root:</p>\n    <pre class=\"code\">sudo -l</pre>\n    <p>You'll see you can run one specific program as root with no password. That program happens to be a text editor — and powerful text editors can run shell commands from inside themselves. Research \"GTFOBins vim sudo\" for how real pentesters abuse this, then try:</p>\n    <pre class=\"code\">sudo vim -c ':!cat /root/flag.txt'</pre>", "h": "23jp32cjppy", "hints": ["Run `cat notes.txt` in the home directory first for a nudge from the (fictional) sysadmin.", "Exact command: sudo vim -c ':!cat /root/flag.txt'"], "widget": null}, {"id": "f1", "cat": "forensics", "title": "Packet Inspector", "pts": 175, "diff": 2, "body": "<p>Here's a condensed packet capture from a coffee-shop WiFi network (fictional, obviously). One of these connections is carrying a plaintext password because it's using an old, unencrypted protocol.</p>\n    <table class=\"pkt\">\n      <tr><th>#</th><th>Time</th><th>Src</th><th>Dst</th><th>Protocol</th><th>Info</th></tr>\n      <tr class=\"dns\"><td>1</td><td>0.001</td><td>192.168.1.40</td><td>8.8.8.8</td><td>DNS</td><td>Standard query A files.novatech-intra.net</td></tr>\n      <tr><td>2</td><td>0.014</td><td>192.168.1.40</td><td>203.0.113.9</td><td>TCP</td><td>40212 → 21 [SYN]</td></tr>\n      <tr class=\"ftp\"><td>3</td><td>0.102</td><td>203.0.113.9</td><td>192.168.1.40</td><td>FTP</td><td>220 novatech-intra FTP server ready</td></tr>\n      <tr class=\"ftp\"><td>4</td><td>0.145</td><td>192.168.1.40</td><td>203.0.113.9</td><td>FTP</td><td>USER jreyes</td></tr>\n      <tr class=\"ftp\"><td>5</td><td>0.189</td><td>203.0.113.9</td><td>192.168.1.40</td><td>FTP</td><td>331 Password required</td></tr>\n      <tr class=\"ftp\"><td>6</td><td>0.201</td><td>192.168.1.40</td><td>203.0.113.9</td><td>FTP</td><td>PASS Narwh4l_Jumps!</td></tr>\n      <tr class=\"ftp\"><td>7</td><td>0.233</td><td>203.0.113.9</td><td>192.168.1.40</td><td>FTP</td><td>230 Login successful</td></tr>\n      <tr class=\"tls\"><td>8</td><td>0.310</td><td>192.168.1.40</td><td>17.253.1.2</td><td>TLS</td><td>Client Hello (encrypted)</td></tr>\n    </table>\n    <p>What's the plaintext password? Flag: <code>CTF{password_exactly_as_shown}</code>.</p>", "h": "6gk5se593f", "hints": ["FTP (File Transfer Protocol) sends usernames and passwords with no encryption — this is exactly why it's considered obsolete.", "Look at packet #6, the PASS command."], "widget": null}, {"id": "f2", "cat": "forensics", "title": "The Phantom Log-in", "pts": 200, "diff": 2, "body": "<p>A company's login audit log for one account, \"mparker\", over one week:</p>\n    <pre class=\"code\">2026-03-01 09:02:14  mparker  login OK   203.0.113.44   London, UK\n2026-03-01 17:40:02  mparker  login OK   203.0.113.44   London, UK\n2026-03-02 09:01:50  mparker  login OK   203.0.113.44   London, UK\n2026-03-02 09:03:11  mparker  login FAIL 185.220.101.7   Unknown (Tor exit node)\n2026-03-02 09:03:40  mparker  login FAIL 185.220.101.7   Unknown (Tor exit node)\n2026-03-02 09:04:02  mparker  login OK   185.220.101.7   Unknown (Tor exit node)\n2026-03-02 09:04:10  mparker  password_reset_triggered\n2026-03-02 17:35:44  mparker  login OK   203.0.113.44   London, UK</pre>\n    <p>This is a textbook sign of what's happening at 09:03–09:04 on March 2nd? The flag is <code>CTF{term}</code> — the standard security term (one word) for an account being accessed by someone other than its owner, which is exactly what this log pattern indicates (impossible travel + a login from an anonymising network, two failed tries then success).</p>", "h": "pr1hnceyfn", "hints": ["mparker logged in from London at 09:01, then from a Tor exit node (anonymous, could be anywhere) two minutes later — that's impossible travel.", "Two failed logins followed by a success from a suspicious IP, then a password reset, is the classic shape of an account compromise."], "widget": null}, {"id": "f3", "cat": "forensics", "title": "Hidden in Plain Sight", "pts": 225, "diff": 3, "body": "<p>A suspect image's file was shared as \"vacation.png\", but its first bytes (the \"magic number\" that identifies real file type, regardless of extension) were captured in a hex dump:</p>\n    <pre class=\"hexd\">00000000  50 4b 03 04 14 00 00 00  08 00 b2 4c 53 59 00 00  |PK.........LSY..|\n00000010  00 00 00 00 00 00 00 00  00 00 09 00 1c 00 64 6f  |..............do|\n00000020  63 2e 78 6d 6c 55 54 09  00 03 e4 9c 1f 66 e4 9c  |c.xmlUT......f..|</pre>\n    <p>\"PNG\" files should start with the bytes <code>89 50 4E 47</code>. This file starts with <code>50 4B 03 04</code> instead (\"PK\") — a different, very common file signature. Research \"file magic numbers PK 50 4B\" or \"zip file signature\" to confirm: what kind of file is this <i>actually</i> a renamed copy of?</p>\n    <p>The flag is <code>CTF{filetype}</code> using the general file type these magic bytes belong to (think: what format do .docx, .xlsx and .zip files all share under the hood?).</p>", "h": "1ngq730j15l", "hints": ["PK\\x03\\x04 is the ZIP local file header signature — Office files (.docx/.xlsx/.pptx) are secretly ZIP archives too.", "The flag is simply CTF{zip}."], "widget": null}, {"id": "w1", "cat": "web", "title": "Comments Don't Get Deployed", "pts": 125, "diff": 1, "body": "<p>Developers sometimes leave notes to themselves in HTML/JS comments and forget to strip them before pushing to production — a classic, very common real-world mistake.</p>\n    <p>Open your browser's DevTools (F12) and inspect this challenge card itself. Somewhere in this page's source is a developer comment meant only for the dev team. (Tip: search the full page source for the word \"TODO\" or \"debug\".)</p>\n    <!-- TODO: remove before launch. debug flag for QA: CTF{comments_are_not_secrets} -->\n    <p>Search the page's raw HTML source (not just what's rendered) for a comment near this text.</p>", "h": "o3hk1nti6z", "hints": ["Ctrl+U or F12 → Elements/Sources, then Ctrl+F for the word 'debug' in the raw HTML.", "It's an HTML comment right after this very paragraph in the page source."], "widget": null}, {"id": "w2", "cat": "web", "title": "SQL Injection 101", "pts": 225, "diff": 3, "body": "<p>Below is a simulated login form for \"NovaBank.\" It builds its database query by directly pasting your input into a string — exactly how real SQL injection vulnerabilities happen. Watch the query it builds as you type.</p>\n    <p>A classic bypass uses a condition that's always true. Try a username like:</p>\n    <pre class=\"code\">admin' --</pre>\n    <p>...or a password like:</p>\n    <pre class=\"code\">' OR '1'='1</pre>", "h": "24yvh6ycfv5", "hints": ["In SQL, -- starts a comment, so admin'-- cuts off the rest of the query (including the password check) entirely.", "Try username: admin' -- (with a trailing space) and leave the password blank, or use ' OR '1'='1 in either field."], "widget": "sqli"}, {"id": "w3", "cat": "web", "title": "Cookie Tampering", "pts": 200, "diff": 2, "body": "<p>This simulated intranet site stores your login state in a cookie that the browser controls — never trust the client to tell the truth about who it is. The cookie is just Base64-encoded JSON, not signed or encrypted.</p>\n    <p>Try decoding the cookie value in the Toolkit (Base64 →) to see what's inside, change it so your role is <code>admin</code>, then re-encode it (→ Base64) and paste it back into the cookie box below.</p>", "h": "253wfhy2ftd", "hints": ["Toolkit: paste the part after 'session=' into Input, click 'Base64 →' to see {\"user\":\"guest\",\"role\":\"user\"}.", "Edit the JSON to {\"user\":\"guest\",\"role\":\"admin\"}, click '→ Base64', then paste session=<result> back in and click GET /admin."], "widget": "cookie"}, {"id": "s1", "cat": "social", "title": "Spot the Phish", "pts": 175, "diff": 2, "body": "<p>Five emails. Some are legitimate, some are phishing. Classify every one, then submit. Look at the sender address closely (not just the display name), the urgency, spelling, and what each email asks you to actually do.</p>", "h": "1np0gzhnljo", "hints": ["Compare each 'From' address character-by-character against the real domain it's impersonating — look for swapped letters or the wrong top-level domain.", "Phishing emails: #1 (streamfiix-support.com — note the extra 'i'), #3 (random prize, pay a 'fee'), #5 ('urgent', gift cards, asks for secrecy — a classic CEO-fraud/gift-card scam)."], "widget": "phish"}, {"id": "s2", "cat": "social", "title": "The Pretext Call", "pts": 200, "diff": 2, "body": "<p>Transcript of a call received by a junior helpdesk technician (fictional, for training):</p>\n    <blockquote style=\"border-left:3px solid var(--cyan);padding:8px 14px;color:var(--dim);margin:10px 0\">\n    <p><b>Caller:</b> \"Hi, this is Mark from the Executive Office, I'm calling for Mr. Davies, our CFO. He's about to walk into the board meeting and his laptop just locked him out. He needs his password reset to the temporary one RIGHT NOW or the board presentation is ruined. I know this is against policy but he will be extremely unhappy if this isn't done in the next two minutes. Can you just read me the reset link, or reset it to 'Welcome2026' so I can relay it? Please don't log this as a ticket, he doesn't want IT making a fuss about his laptop issues.\"</p>\n    </blockquote>\n    <p>This call uses several classic social-engineering pressure tactics at once. Name the <i>one</i> technique most central to this whole call — the thing that makes a target skip their normal verification steps because they're worried about a senior person's reaction. One word for the flag: <code>CTF{word}</code>.</p>", "h": "1p8imxf1eg9", "hints": ["The caller invents a powerful, impatient executive and implies consequences for not helping immediately — that's an appeal to a position of power.", "The core technique: impersonating/invoking authority to bypass normal checks: CTF{authority}."], "widget": null}];
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+const hashFlag=f=>cyrb53(f.trim().toLowerCase()).toString(36);
+function toast(t,bad){const el=$('#toast');el.textContent=t;el.className='toast show'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='toast',2600);}
+
+const CATS={
+  intro:{name:'Warm-Up',icon:'🚀',blurb:'Start here'},
+  crypto:{name:'Cryptography',icon:'🔐',blurb:'Break the codes'},
+  osint:{name:'OSINT',icon:'🕵️',blurb:'Open-source intelligence'},
+  pentest:{name:'Pen Testing',icon:'💻',blurb:'Use the Pentest Lab tab'},
+  forensics:{name:'Forensics & Network',icon:'🔎',blurb:'Dig through the evidence'},
+  web:{name:'Web Security',icon:'🌐',blurb:'Read the code'},
+  social:{name:'Social Engineering',icon:'🎣',blurb:'Humans are the target'}
+};
+
+/* ---------- state ---------- */
+let S=null;
+try{S=JSON.parse(localStorage.getItem('cq_state_v1'))}catch(e){}
+S=S||{team:'',start:0,solved:{},hints:{},ended:false,extra:0};
+const save=()=>{try{localStorage.setItem('cq_state_v1',JSON.stringify(S))}catch(e){}};
+const params=new URLSearchParams(location.search);
+const baseMin=Math.max(1,parseInt(params.get('minutes'))||90);
+const duration=()=>(baseMin*60+(S.extra||0))*1000;
+const hintCost=(c,n)=>n<=0?0:(n===1?Math.round(c.pts*.1):Math.round(c.pts*.3));
+const score=()=>Object.values(S.solved).reduce((a,b)=>a+b.pts,0);
+const total=()=>DATA.reduce((a,c)=>a+c.pts,0);
+const timeLeft=()=>S.start?Math.max(0,S.start+duration()-Date.now()):duration();
+const over=()=>S.ended||(S.start&&timeLeft()<=0);
+const fmt=ms=>{const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+/* ---------- boot ---------- */
+function boot(){
+  if(!S.start){$('#welcome').classList.remove('hidden');$('#app').classList.add('hidden');return}
+  $('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');
+  if(params.has('host'))$('#hostbox').classList.remove('hidden');
+  $('#hTeam').textContent=S.team;
+  renderBoard();updateHeader();tick();
+  if(!boot.timer)boot.timer=setInterval(tick,1000);
+  initLab();initTools();
+}
+$('#startbtn').onclick=()=>{
+  const n=$('#teamname').value.trim();
+  if(!n){$('#teamname').focus();toast('Pick a team name first',true);return}
+  S.team=n;S.start=Date.now();S.solved={};S.hints={};S.ended=false;S.extra=0;save();boot();
+};
+$('#teamname').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startbtn').click()});
+
+function updateHeader(){
+  $('#hScore').textContent=score();
+  $('#hSolved').textContent=Object.keys(S.solved).length+'/'+DATA.length;
+  $('#hBar').style.width=(Object.keys(S.solved).length/DATA.length*100)+'%';
+}
+function tick(){
+  const left=timeLeft();
+  $('#hTimer').textContent=S.ended?'DONE':fmt(left);
+  const tb=$('#timerBox');tb.classList.toggle('warn',left<=15*60e3&&left>5*60e3);tb.classList.toggle('crit',left<=5*60e3&&!S.ended);
+  if(!S.ended&&left<=0){S.ended=true;save();showReport(true)}
+}
+
+/* ---------- tabs ---------- */
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  ['board','lab','tools','brief'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  if(b.dataset.tab==='lab')setTimeout(()=>$('#tinp').focus(),50);
+};
+
+/* ---------- board ---------- */
+function renderBoard(){
+  let h='';
+  for(const k of Object.keys(CATS)){
+    const list=DATA.filter(c=>c.cat===k);if(!list.length)continue;
+    const done=list.filter(c=>S.solved[c.id]).length;
+    h+=`<div class="cat"><h2>${CATS[k].icon} ${CATS[k].name}</h2><small>${CATS[k].blurb} · ${done}/${list.length}</small></div><div class="grid">`;
+    for(const c of list){
+      const s=S.solved[c.id];
+      h+=`<button class="ch ${s?'done':''}" data-id="${c.id}"><div class="t">${esc(c.title)}</div><div class="m"><span>${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span><span class="pts">${s?'+'+s.pts:c.pts} pts</span></div></button>`;
+    }
+    h+='</div>';
+  }
+  $('#tab-board').innerHTML=h;
+  $$('.ch').forEach(b=>b.onclick=()=>openChallenge(b.dataset.id));
+}
+
+/* ---------- challenge modal ---------- */
+function closeModal(){$('#modal').classList.add('hidden');document.body.style.overflow=''}
+$('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden')&&!$('#mbox').dataset.report)closeModal()});
+
+function openChallenge(id){
+  const c=DATA.find(x=>x.id===id);if(!c)return;
+  const used=S.hints[id]||0;const solved=S.solved[id];
+  const mb=$('#mbox');mb.dataset.report='';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <div><span class="tag">${CATS[c.cat].icon} ${CATS[c.cat].name}</span><span class="tag pts">${c.pts} pts</span><span class="tag">${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span></div>
+    <h2 style="margin-top:12px">${esc(c.title)}</h2>
+    <div class="body">${c.body}</div>
+    <div id="widget"></div>
+    <div class="flagrow"><input type="text" id="flagIn" placeholder="CTF{...}" autocomplete="off" spellcheck="false" ${solved?'disabled':''}><button class="btn" id="flagGo" ${solved?'disabled':''}>Submit</button></div>
+    <div class="msg ${solved?'ok':''}" id="flagMsg">${solved?'✓ Solved for '+solved.pts+' points':''}</div>
+    <div class="hints" id="hintBox"></div>`;
+  $('#modal').classList.remove('hidden');document.body.style.overflow='hidden';
+  $('.mclose',mb).onclick=closeModal;
+  renderHints(c);
+  if(c.widget&&WIDGETS[c.widget])WIDGETS[c.widget]($('#widget'),c);
+  const submit=()=>{
+    if(over()){$('#flagMsg').className='msg bad';$('#flagMsg').textContent='Time is up – submissions are closed.';return}
+    const v=$('#flagIn').value;if(!v.trim())return;
+    if(hashFlag(v)===c.h){
+      const pts=Math.max(0,c.pts-hintCost(c,S.hints[id]||0));
+      S.solved[id]={pts,t:Date.now()};save();renderBoard();updateHeader();
+      $('#flagMsg').className='msg ok';$('#flagMsg').textContent='✓ Correct! +'+pts+' points';
+      $('#flagIn').disabled=true;$('#flagGo').disabled=true;toast('🏴 Flag captured! +'+pts);
+      if(Object.keys(S.solved).length===DATA.length)setTimeout(()=>showReport(false),1200);
+    }else{
+      $('#flagMsg').className='msg bad';$('#flagMsg').textContent='✗ Not quite. Check the format and spelling.';
+    }
+  };
+  $('#flagGo').onclick=submit;
+  $('#flagIn').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+  if(!solved)setTimeout(()=>$('#flagIn').focus(),30);
+}
+function renderHints(c){
+  const used=S.hints[c.id]||0;const box=$('#hintBox');
+  let h='';
+  for(let i=0;i<used;i++)h+=`<div class="hint"><b>Hint ${i+1}:</b> ${c.hints[i]}</div>`;
+  if(used<c.hints.length&&!S.solved[c.id]){
+    const cost=hintCost(c,used+1);
+    h+=`<button class="btn sec sm" id="hintBtn">💡 Reveal hint ${used+1} (−${cost} pts)</button>`;
+  }
+  box.innerHTML=h;
+  const b=$('#hintBtn');
+  if(b)b.onclick=()=>{S.hints[c.id]=(S.hints[c.id]||0)+1;save();renderHints(c)};
+}
+
+/* ---------- report ---------- */
+function showReport(timeUp){
+  const used=Math.min(duration(),(S.ended&&S.endedAt?S.endedAt:Date.now())-S.start);
+  const rows=DATA.filter(c=>S.solved[c.id]).map(c=>`<tr><td>${esc(c.title)}</td><td>${esc(CATS[c.cat].name)}</td><td>${S.solved[c.id].pts}</td></tr>`).join('');
+  const missed=DATA.filter(c=>!S.solved[c.id]).length;
+  const mb=$('#mbox');mb.dataset.report='1';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <h2>${timeUp?'⏰ Time\'s up!':'📄 Mission report'}</h2>
+    <p class="lead">Team <b>${esc(S.team)}</b> · <b style="color:var(--amber)">${score()}</b> / ${total()} points · ${Object.keys(S.solved).length}/${DATA.length} flags${missed?'':' · 🏆 PERFECT'}</p>
+    <table class="sum"><tr><th>Challenge</th><th>Category</th><th>Points</th></tr>${rows||'<tr><td colspan="3">No flags yet – keep hunting!</td></tr>'}</table>
+    <div class="row" style="margin-top:16px"><button class="btn" id="copyRep">📋 Copy summary</button><button class="btn sec" id="closeRep">Close</button></div>
+    <p class="lead" style="font-size:13px">Show this screen to your host to log your score.</p>`;
+  $('#modal').classList.remove('hidden');
+  $('.mclose',mb).onclick=closeModal;$('#closeRep').onclick=closeModal;
+  $('#copyRep').onclick=()=>{
+    const t=`CyberQuest – Team ${S.team}: ${score()}/${total()} pts, ${Object.keys(S.solved).length}/${DATA.length} flags`;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied!'),()=>toast(t));
+  };
+}
+$('#reportBtn').onclick=()=>showReport(false);
+$('#finishBtn').onclick=()=>{if(confirm('Finish now? Your clock stops and submissions close.')){S.ended=true;S.endedAt=Date.now();save();tick();showReport(false)}};
+$('#hostPlus').onclick=()=>{S.extra=(S.extra||0)+600;S.ended=false;save();tick();toast('+10 minutes')};
+$('#hostReset').onclick=()=>{if(confirm('Wipe progress in this browser?')){try{localStorage.removeItem('cq_state_v1')}catch(e){}location.reload()}};
+
+/* =====================================================================
+   WIDGETS – interactive challenge components
+   ===================================================================== */
+const WIDGETS={};
+
+/* SQL injection login simulator (fake app, fake DB) */
+WIDGETS.sqli=(el,c)=>{
+  el.innerHTML=`<div class="loginbox"><b>🏦 NovaBank Staff Portal</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <label>Username</label><input type="text" id="sqU" autocomplete="off" spellcheck="false">
+    <label>Password</label><input type="text" id="sqP" autocomplete="off" spellcheck="false">
+    <p style="margin:12px 0 0"><button class="btn sm" id="sqGo">Log in</button></p>
+    <div class="q" id="sqQ"></div><div class="res" id="sqR"></div></div>`;
+  const run=()=>{
+    const u=$('#sqU').value,p=$('#sqP').value;
+    $('#sqQ').textContent="SELECT * FROM users WHERE username='"+u+"' AND password='"+p+"';";
+    const R=$('#sqR');
+    const taut=/'\s*or\s+(['"]?)(\w+)\1\s*=\s*(['"]?)\2\3?/i;
+    const bypass=/^\s*admin\s*'\s*(--|#|\/\*)/i.test(u)||taut.test(u)||taut.test(p);
+    if(bypass){R.className='res ok';R.innerHTML='✔ Query returned a row. Logged in as <b>admin</b>.<br>Secret: <b>'+A('Q1RGe3NxbF9pbmplY3Rpb25fMTAxX2NsYXNzaWN9')+'</b><br><span style="color:var(--dim)">The fix: parameterised queries, never string concatenation.</span>'}
+    else if((u+p).includes("'")){R.className='res bad';R.textContent="ERROR 1064 (42000): You have an error in your SQL syntax; check the manual near '"+(u+p).split("'").slice(1).join("'")+"' – the database just told you it's injectable!"}
+    else{R.className='res bad';R.textContent='✘ Invalid username or password.'}
+  };
+  $('#sqGo').onclick=run;
+  ['sqU','sqP'].forEach(i=>$('#'+i).addEventListener('keydown',e=>{if(e.key==='Enter')run()}));
+};
+
+/* Cookie tampering */
+WIDGETS.cookie=(el,c)=>{
+  const orig=btoa(JSON.stringify({user:'guest',role:'user'}));
+  el.innerHTML=`<div class="loginbox"><b>🖥 NovaCorp Intranet</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <p style="margin:8px 0;color:var(--dim);font-size:14px">You're logged in as <b>guest</b>. The browser sends this on every request:</p>
+    <label>Cookie</label><textarea id="ckV" rows="2" spellcheck="false">session=${orig}</textarea>
+    <p style="margin:12px 0 0"><button class="btn sm" id="ckGo">GET /admin</button> <button class="btn sec sm" id="ckReset">Reset</button></p>
+    <div class="res" id="ckR"></div></div>`;
+  $('#ckReset').onclick=()=>{$('#ckV').value='session='+orig;$('#ckR').textContent=''};
+  $('#ckGo').onclick=()=>{
+    const R=$('#ckR');
+    try{
+      const m=$('#ckV').value.trim().match(/^session=(.+)$/);if(!m)throw 0;
+      const o=JSON.parse(atob(m[1].trim()));
+      if(o&&o.role==='admin'){R.className='res ok';R.innerHTML='HTTP/1.1 200 OK<br>Welcome to the admin panel, '+esc(o.user||'?')+'.<br>Flag: <b>'+A('Q1RGe3RydXN0X25vdGhpbmdfZnJvbV90aGVfY2xpZW50fQ==')+'</b>'}
+      else{R.className='res bad';R.textContent='HTTP/1.1 403 Forbidden – hello '+(o.user||'?')+', your role is "'+(o.role||'?')+'". Admins only.'}
+    }catch(e){R.className='res bad';R.textContent='HTTP/1.1 400 Bad Request – session cookie could not be parsed.'}
+  };
+};
+
+/* Phish or legit? */
+WIDGETS.phish=(el,c)=>{
+  const mails=[
+    {from:'StreamFlix Billing &lt;billing@streamfiix-support.com&gt;',s:'⚠ Payment failed – account will be CLOSED in 2 hours',b:'Dear customer, we could not process your payment. <a href="#" onclick="return false">Update billing details now</a> or your account and all profiles will be permanently deleted.',a:'P'},
+    {from:'University IT Service Desk &lt;it-helpdesk@your-university.ac.uk&gt;',s:'Planned maintenance: Saturday 02:00–04:00',b:'Hi all, the student email system will be unavailable for two hours this Saturday for updates. No action is needed. See the status page on the intranet for details. – IT Service Desk',a:'L'},
+    {from:'Prize Centre &lt;winner.2026.claim@mailbox-promo.net&gt;',s:'Congratulations!! You won a £500 gift card',b:'You were randomly selected! Claim within 30 minutes: <a href="#" onclick="return false">http://bit.ly/claim-your-500</a>. A small £2 delivery fee applies – enter your card details to receive your prize.',a:'P'},
+    {from:'University Library &lt;library@your-university.ac.uk&gt;',s:'Reminder: "Intro to Networks" is due back tomorrow',b:'Hello, your loan is due tomorrow. You can renew it by signing in through the library page you normally use, or reply to this email if you need help.',a:'L'},
+    {from:'Prof. A. Morgan &lt;a.morgan.prof.office@gmail.com&gt;',s:'Urgent task – are you available?',b:'I\'m in a meeting and can\'t talk. I need you to buy 5 × £100 gift cards for a student reward. Scan the codes and email them to me. Please keep this between us. I\'ll reimburse you later.',a:'P'}
+  ];
+  const ans={};
+  el.innerHTML='<p class="lead" style="margin-top:14px">Classify each email, then submit your verdicts.</p>'+mails.map((m,i)=>`<div class="email"><div class="from">From: ${m.from}</div><div class="subj">${m.s}</div><div>${m.b}</div><div class="btns"><button data-i="${i}" data-v="P">🎣 Phishing</button><button data-i="${i}" data-v="L">✅ Legit</button></div></div>`).join('')+'<p><button class="btn sm" id="phGo">Submit verdicts</button></p><div class="res" id="phR"></div>';
+  el.onclick=e=>{
+    const b=e.target.closest('.btns button');if(!b)return;
+    ans[b.dataset.i]=b.dataset.v;
+    $$('button',b.parentNode).forEach(x=>x.className=x.dataset.v===ans[b.dataset.i]?(x.dataset.v==='P'?'sel-p':'sel-l'):'');
+  };
+  $('#phGo',el).onclick=()=>{
+    const R=$('#phR',el);
+    if(Object.keys(ans).length<mails.length){R.className='res bad';R.textContent='Answer all five first.';return}
+    const ok=mails.filter((m,i)=>ans[i]===m.a).length;
+    if(ok===mails.length){R.className='res ok';R.innerHTML='5/5 – sharp eyes! Flag: <b>'+A('Q1RGe2h1bWFuc19hcmVfdGhlX2ZpcmV3YWxsfQ==')+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/5 correct. Re-read the sender addresses, the urgency and what each email wants you to do.'}
+  };
+};
+
+/* =====================================================================
+   TOOLKIT
+   ===================================================================== */
+const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+const MORSE_R=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+const caesar=(s,k)=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)});
+const vig=(s,key,dir)=>{key=key.toLowerCase().replace(/[^a-z]/g,'');if(!key)return 'Enter a key (letters only)';let i=0;return s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;const k=(key.charCodeAt(i++%key.length)-97)*dir;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)})};
+const utf8bytes=s=>[...new TextEncoder().encode(s)];
+const fromBytes=b=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(b))}catch(e){return String.fromCharCode(...b)}};
+const parseHex=s=>{const h=s.replace(/0x|[\s,:]/gi,'');if(!/^([0-9a-f]{2})+$/i.test(h))throw new Error('Not valid hex');return h.match(/../g).map(x=>parseInt(x,16))};
+function md5(str){
+  const bytes=new TextEncoder().encode(str);
+  const K=new Uint32Array(64),S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296);
+  const n=bytes.length,total=((n+8>>6)+1)<<6;
+  const buf=new Uint8Array(total);buf.set(bytes);buf[n]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(total-8,(n*8)>>>0,true);dv.setUint32(total-4,Math.floor(n*8/4294967296),true);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let off=0;off<total;off+=64){
+    const M=new Uint32Array(16);for(let i=0;i<16;i++)M[i]=dv.getUint32(off+i*4,true);
+    let A_=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}
+      else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}
+      else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A_+K[i]+M[g])>>>0;
+      A_=D;D=C;C=B;
+      B=(B+((F<<S[i])|(F>>>(32-S[i]))))>>>0;
+    }
+    a0=(a0+A_)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  const out=new DataView(new ArrayBuffer(16));
+  out.setUint32(0,a0,true);out.setUint32(4,b0,true);out.setUint32(8,c0,true);out.setUint32(12,d0,true);
+  return [...new Uint8Array(out.buffer)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const TOOLS=[
+  ['Base64 →',s=>fromBytes([...atob(s.trim())].map(c=>c.charCodeAt(0)))],
+  ['→ Base64',s=>btoa(String.fromCharCode(...utf8bytes(s)))],
+  ['Hex →',s=>fromBytes(parseHex(s))],
+  ['→ Hex',s=>utf8bytes(s).map(b=>b.toString(16).padStart(2,'0')).join(' ')],
+  ['Binary →',s=>fromBytes(s.replace(/[^01]/g,'').match(/.{8}/g).map(b=>parseInt(b,2)))],
+  ['→ Binary',s=>utf8bytes(s).map(b=>b.toString(2).padStart(8,'0')).join(' ')],
+  ['Decimal →',s=>fromBytes(s.trim().split(/[\s,]+/).map(Number))],
+  ['→ Decimal',s=>utf8bytes(s).join(' ')],
+  ['Morse →',s=>s.trim().split(/\s*\/\s*|\s{3,}/).map(w=>w.split(/\s+/).map(x=>MORSE_R[x]||'?').join('')).join(' ')],
+  ['→ Morse',s=>s.toUpperCase().split(' ').map(w=>[...w].map(c=>MORSE[c]||'').filter(Boolean).join(' ')).join(' / ')],
+  ['ROT13',s=>caesar(s,13)],
+  ['URL decode',s=>decodeURIComponent(s)],
+  ['Reverse',s=>[...s].reverse().join('')],
+  ['MD5',s=>md5(s)]
+];
+function initTools(){
+  if(initTools.done)return;initTools.done=true;
+  const out=v=>{$('#tkOut').value=v};
+  const safe=f=>{try{out(f())}catch(e){out('⚠ '+(e.message||'Could not process that input'))}};
+  const row=$('#tkBtns');
+  TOOLS.forEach(([n,f])=>{const b=document.createElement('button');b.className='btn sec sm';b.textContent=n;b.onclick=()=>safe(()=>f($('#tkIn').value));row.appendChild(b)});
+  $('#tkSwap').onclick=()=>{$('#tkIn').value=$('#tkOut').value;out('')};
+  $('#cGo').onclick=()=>safe(()=>caesar($('#tkIn').value,+$('#cShift').value||0));
+  $('#cBrute').onclick=()=>safe(()=>{const s=$('#tkIn').value;let r='';for(let k=1;k<=25;k++)r+='shift '+String(k).padStart(2)+': '+caesar(s,k)+'\n';return r});
+  $('#vEnc').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,1));
+  $('#vDec').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,-1));
+  $('#xGo').onclick=()=>safe(()=>{const k=parseInt($('#xKey').value,16);if(isNaN(k))throw new Error('Enter a key like 2a');return fromBytes(parseHex($('#tkIn').value).map(b=>b^k))});
+  $('#xBrute').onclick=()=>safe(()=>{const b=parseHex($('#tkIn').value);let r='';for(let k=0;k<256;k++){const t=b.map(x=>x^k);const s=String.fromCharCode(...t);if(/^[\x20-\x7e\n]+$/.test(s))r+='key '+k.toString(16).padStart(2,'0')+': '+s+'\n'}return r||'No fully printable results.'});
+  $('#hOne').onclick=()=>safe(()=>md5($('#tkIn').value));
+  $('#hGo').onclick=()=>safe(()=>{
+    const t=$('#hTarget').value.trim().toLowerCase();if(!/^[0-9a-f]{32}$/.test(t))throw new Error('Target must be a 32-character MD5 hash');
+    const words=$('#tkIn').value.split(/\r?\n/).map(w=>w.trim()).filter(Boolean);
+    const hit=words.find(w=>md5(w)===t);
+    return hit?'🎯 MATCH: '+hit:'No match in '+words.length+' words.';
+  });
+}
+
+/* =====================================================================
+   PENTEST LAB – simulated terminal (all output is fake & scripted)
+   ===================================================================== */
+const TARGET='10.10.0.5';
+const T={host:'local',user:'student',cwd:'/home/svc_backup',root:false,pending:null,hist:[],hi:0};
+const FLAGS={port:()=>A('Q1RGe3AwcnRfc2M0bm4xbmdfMTAxfQ=='),db:()=>A('Q1RGe3JvYm90c190eHRfaXNfbm90X3NlY3VyaXR5fQ=='),root:()=>A('Q1RGe3YxbV9zdWQwX2d0Zm9fcHJpdmVzY30=')};
+const WEB={
+  '/':`<html><head><title>NovaTech Internal Portal</title></head>
+<body>
+<h1>NovaTech Internal Portal</h1>
+<p>Staging server. Authorised staff only.</p>
+<a href="/login">Login</a>
+<!-- v0.9-beta -->
+</body></html>`,
+  '/robots.txt':`User-agent: *
+Disallow: /admin-backup/
+Disallow: /staging/`,
+  '/login':`<html><body><h2>Staff login</h2><form method="post"><input name="user"><input name="pass" type="password"></form></body></html>`,
+  '/admin-backup':`Index of /admin-backup/
+
+[ ] db.sql.bak        2026-03-02 11:40   4.1K
+[ ] readme.txt        2026-03-02 11:42   0.2K`,
+  '/admin-backup/readme.txt':`Nightly DB dump. TODO: move out of web root!! -- Sam`,
+  '/admin-backup/db.sql.bak':`-- MySQL dump 10.13  Distrib 8.0.35
+-- Host: localhost    Database: novatech
+-- debug marker: `,
+  '/images':`HTTP/1.1 403 Forbidden`,
+  '/staging':`HTTP/1.1 403 Forbidden`
+};
+const dbDump=()=>`-- MySQL dump 10.13  Distrib 8.0.35
+-- Host: localhost    Database: novatech
+-- debug marker: ${FLAGS.db()}
+
+INSERT INTO users (id, username, role, note) VALUES
+ (1,'admin','administrator','password rotated Q1'),
+ (2,'jreyes','intern',''),
+ (3,'svc_backup','service','ssh password: Backup2026!');
+`;
+const FS={
+  '/home/svc_backup':['notes.txt','backup.sh'],
+  '/home/svc_backup/notes.txt':`Reminders:
+- Rotate the DB password (again)
+- Admin gave me sudo for vim so I can edit configs as root. Super handy!
+- Don't forget the flag file in /root is for admins only :)`,
+  '/home/svc_backup/backup.sh':`#!/bin/bash
+mysqldump novatech > /var/www/html/admin-backup/db.sql.bak`,
+  '/root':['flag.txt'],
+  '/root/flag.txt':()=>FLAGS.root()+'\n'
+};
+function resolvePath(p){
+  if(!p||p==='~')return '/home/svc_backup';
+  if(p[0]==='~')p='/home/svc_backup'+p.slice(1);
+  if(p[0]!=='/')p=T.cwd+'/'+p;
+  const parts=[];for(const s of p.split('/')){if(!s||s==='.')continue;if(s==='..')parts.pop();else parts.push(s)}
+  return '/'+parts.join('/');
+}
+const promptStr=()=>T.pending?(T.pending.label):(T.host==='local'?'student@kali:~$':`${T.user}@novatech-srv:${T.cwd==='/home/svc_backup'?'~':T.cwd}${T.root?'#':'$'}`);
+function tp(text,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=text;$('#tout').appendChild(d);$('#tout').scrollTop=1e9}
+function setPrompt(){$('#tprompt').textContent=promptStr();$('#tinp').type=(T.pending&&T.pending.secret)?'password':'text'}
+
+function initLab(){
+  if(initLab.done)return;initLab.done=true;
+  tp('CyberQuest Lab — simulated environment. Nothing here touches a real network.','sys');
+  tp('Authorised target: '+TARGET+' (NovaTech staging). Type "help" for commands.\n','dim');
+  const inp=$('#tinp');
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const v=inp.value;inp.value='';
+      if(T.pending){tp(T.pending.label+(T.pending.secret?' ':' '+v),'cmd');const p=T.pending;T.pending=null;p.cb(v);setPrompt();return}
+      tp(promptStr()+' '+v,'cmd');
+      if(v.trim()){T.hist.push(v);T.hi=T.hist.length;try{runCmd(v.trim())}catch(err){tp('error: '+err.message,'err')}}
+      setPrompt();
+    }else if(e.key==='ArrowUp'){if(T.hi>0){T.hi--;inp.value=T.hist[T.hi];e.preventDefault()}}
+    else if(e.key==='ArrowDown'){if(T.hi<T.hist.length-1){T.hi++;inp.value=T.hist[T.hi]}else{T.hi=T.hist.length;inp.value=''}e.preventDefault()}
+  });
+  $('#tout').onclick=()=>inp.focus();
+}
+
+function runCmd(line){
+  const tok=line.split(/\s+/),cmd=tok[0];
+  if(cmd==='clear'){$('#tout').innerHTML='';return}
+  if(T.host==='local')localCmd(line,tok,cmd);else remoteCmd(line,tok,cmd);
+}
+
+function localCmd(line,tok,cmd){
+  const args=tok.slice(1);
+  switch(cmd){
+    case 'help':
+      tp(`Available commands (attacker machine):
+  nmap <ip>               scan for open ports   (try -sV for versions)
+  nc <ip> <port>          connect to a port (netcat)
+  curl <url>              fetch a web page
+  dirb <url>              brute-force common web paths
+  ssh <user>@<ip>         remote login
+  ls / cat <file>         look at local files
+  whoami, echo, clear, exit`,'dim');break;
+    case 'whoami':tp('student');break;
+    case 'ls':tp('targets.txt');break;
+    case 'cat':
+      if(args[0]==='targets.txt')tp(TARGET+'  NovaTech staging server  –  AUTHORISED PRACTICE TARGET\nEverything else: out of scope.');
+      else tp('cat: '+(args[0]||'')+': No such file or directory','err');break;
+    case 'echo':tp(args.join(' '));break;
+    case 'exit':tp('There is nowhere to go. Close the tab if you really want to leave. 😉','dim');break;
+    case 'nmap':{
+      const ip=args.find(a=>/^\d+\.\d+\.\d+\.\d+$/.test(a));
+      if(!ip){tp('Usage: nmap [options] <ip>','err');break}
+      if(ip!==TARGET){tp('Note: Host seems down. Is '+ip+' in scope? Stick to '+TARGET+'.','err');break}
+      const sv=args.includes('-sV');
+      tp(`Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for ${TARGET}
+Host is up (0.0021s latency).
+Not shown: 996 closed tcp ports
+PORT      STATE SERVICE${sv?'  VERSION':''}
+22/tcp    open  ssh${sv?'      OpenSSH 8.9p1 Ubuntu':''}
+80/tcp    open  http${sv?'     Apache httpd 2.4.57':''}
+3306/tcp  open  mysql${sv?'    MySQL (unauthorized)':''}
+31337/tcp open  ${sv?'unknown  (fingerprint not recognised)':'Elite'}
+
+Nmap done: 1 IP address (1 host up) scanned in 1.84 seconds`);break}
+    case 'nc':{
+      if(args[0]!==TARGET){tp('nc: connect to '+(args[0]||'?')+' failed (No route to host)','err');break}
+      const port=args[1];
+      if(port==='31337')tp('=== NovaTech Maintenance Daemon v0.1 ===\nbanner-id: '+FLAGS.port()+'\nType HELP for options.\n(connection closed)');
+      else if(port==='22')tp('SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6');
+      else if(port==='80')tp('(connected – send an HTTP request, or just use curl)','dim');
+      else if(port==='3306')tp('Host is not allowed to connect to this MySQL server','err');
+      else tp('nc: connect to '+TARGET+' port '+port+' (tcp) failed: Connection refused','err');
+      break}
+    case 'curl':{
+      const url=args.find(a=>!a.startsWith('-'));
+      if(!url){tp('curl: try \'curl http://'+TARGET+'/\'','err');break}
+      const m=url.match(/^(?:https?:\/\/)?([^\/]+)(\/.*)?$/);
+      if(!m||m[1]!==TARGET){tp('curl: (6) Could not resolve host: '+(m?m[1]:url),'err');break}
+      let path=m[2]||'/';path=path.split('?')[0];if(path.length>1)path=path.replace(/\/+$/,'');
+      if(path==='/admin-backup/db.sql.bak'){tp(dbDump());break}
+      if(WEB[path]!==undefined)tp(WEB[path]);
+      else tp('<html><head><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
+      break}
+    case 'dirb':case 'gobuster':{
+      const url=args.find(a=>/^https?:\/\//.test(a)||a.includes(TARGET));
+      if(!url||!url.includes(TARGET)){tp('Usage: dirb http://'+TARGET+'/','err');break}
+      tp(`-----------------
+DIRB v2.22
+URL_BASE: http://${TARGET}/
+WORDLIST_FILES: common.txt
+-----------------
+==> DIRECTORY: /images/          (CODE:403)
++ /index.html                    (CODE:200|SIZE:187)
++ /login                         (CODE:200|SIZE:130)
++ /robots.txt                    (CODE:200|SIZE:61)
+==> DIRECTORY: /staging/         (CODE:403)
+==> DIRECTORY: /admin-backup/    (CODE:200)
+-----------------
+DOWNLOADED: 4612 - FOUND: 6`);break}
+    case 'ssh':{
+      const m=(args[0]||'').match(/^(\w+)@(.+)$/);
+      if(!m){tp('Usage: ssh user@'+TARGET,'err');break}
+      if(m[2]!==TARGET){tp('ssh: connect to host '+m[2]+' port 22: No route to host','err');break}
+      const user=m[1];
+      T.pending={label:user+'@'+TARGET+"'s password:",secret:true,cb:pw=>{
+        if(user==='svc_backup'&&pw==='Backup2026!'){
+          T.host='remote';T.user=user;T.root=false;T.cwd='/home/svc_backup';
+          tp('Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-91-generic x86_64)\nLast login: Mon Mar  2 11:47:02 2026\nType "help" for the commands available in this simulated shell.','sys');
+        }else tp('Permission denied, please try again.','err');
+      }};break}
+    default:tp(cmd+': command not found (type "help")','err');
+  }
+}
+
+function remoteCmd(line,tok,cmd){
+  const args=tok.slice(1);
+  const canRead=p=>!(p.startsWith('/root')&&!T.root);
+  switch(cmd){
+    case 'help':
+      tp(`Commands on the target (simulated shell):
+  ls [dir]   cat <file>   cd <dir>   pwd   whoami   id
+  sudo -l                 list what you may run with sudo
+  find / -perm -4000 2>/dev/null     list SUID binaries
+  sudo <command>          run something as root (if allowed)
+  exit                    log out`,'dim');break;
+    case 'whoami':tp(T.root?'root':T.user);break;
+    case 'id':tp(T.root?'uid=0(root) gid=0(root) groups=0(root)':'uid=1001(svc_backup) gid=1001(svc_backup) groups=1001(svc_backup)');break;
+    case 'pwd':tp(T.cwd);break;
+    case 'hostname':tp('novatech-srv');break;
+    case 'cd':{
+      const p=resolvePath(args[0]);
+      if(FS[p]&&Array.isArray(FS[p])){if(!canRead(p))tp('bash: cd: '+p+': Permission denied','err');else T.cwd=p}
+      else if(p==='/')T.cwd='/';
+      else tp('bash: cd: '+(args[0]||'')+': No such file or directory','err');break}
+    case 'ls':{
+      const p=resolvePath(args.find(a=>!a.startsWith('-')));
+      if(p==='/'){tp('bin  etc  home  root  usr  var');break}
+      if(!FS[p]||!Array.isArray(FS[p])){tp('ls: cannot access \''+(args[0]||'')+'\': No such file or directory','err');break}
+      if(!canRead(p)){tp('ls: cannot open directory \''+p+'\': Permission denied','err');break}
+      tp(FS[p].join('  '));break}
+    case 'cat':{
+      const p=resolvePath(args[0]);
+      if(!args[0]){tp('cat: missing file','err');break}
+      if(!(p in FS)||Array.isArray(FS[p])){tp('cat: '+args[0]+': No such file or directory','err');break}
+      if(!canRead(p)){tp('cat: '+args[0]+': Permission denied','err');break}
+      const v=FS[p];tp(typeof v==='function'?v():v);break}
+    case 'find':
+      if(/-perm\s+-4000/.test(line))tp('/usr/bin/passwd\n/usr/bin/chsh\n/usr/bin/sudo\n/usr/bin/mount\n/usr/bin/su');
+      else tp('find: (simulated) try: find / -perm -4000 2>/dev/null','dim');break;
+    case 'sudo':{
+      if(/^sudo\s+-l$/.test(line)){
+        tp(`Matching Defaults entries for svc_backup on novatech-srv:
+    env_reset, mail_badpass
+
+User svc_backup may run the following commands on novatech-srv:
+    (root) NOPASSWD: /usr/bin/vim`);break}
+      if(/^sudo\s+vim\s+-c\s+['"]?:!\s*cat\s+\/root\/flag\.txt['"]?$/.test(line)){tp(FLAGS.root());break}
+      if(/^sudo\s+vim\s+-c\s+['"]?:!\s*(\/bin\/)?(sh|bash)['"]?$/.test(line)){T.root=true;T.user='root';tp('(vim spawned a shell as root)','sys');break}
+      if(/^sudo\s+vim(\s|$)/.test(line)){tp('(vim opens… this simulation has no editor UI. Think about how vim can run shell commands: -c lets you pass a command on start-up.)','dim');break}
+      tp('Sorry, user svc_backup is not allowed to execute \''+args.join(' ')+'\' as root on novatech-srv.','err');break}
+    case 'exit':case 'logout':
+      if(T.root){T.root=false;T.user='svc_backup';tp('(back to svc_backup)','dim')}
+      else{T.host='local';T.user='student';tp('Connection to '+TARGET+' closed.','dim')}
+      break;
+    default:tp('bash: '+cmd+': command not found (type "help")','err');
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

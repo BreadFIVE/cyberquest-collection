@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberQuest – Terminal Trainer</title>
+<!--
+  Nice work – you read the source! That's hacker habit #1.
+  Your first flag: CTF{linux_starts_with_a_prompt}
+-->
+<style>
+:root{--accent:#8dff7a}
+:root{
+  --bg:#0a0e14;--panel:#111823;--panel2:#161f2e;--line:#243044;--text:#d6e2f0;--dim:#7e8ea6;
+  --green:var(--accent);--cyan:#38d6ff;--amber:#ffc247;--red:#ff5d6c;--purple:#b58bff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+body{min-height:100vh;background-image:radial-gradient(circle at 15% -10%,#12304a55,transparent 45%),radial-gradient(circle at 100% 0,#2a164a44,transparent 40%)}
+code,pre,.mono{font-family:var(--mono)}
+a{color:var(--cyan)}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+header.top{position:sticky;top:0;z-index:20;background:#0a0e14ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.logo{font-family:var(--mono);font-weight:700;color:var(--green);letter-spacing:.5px}
+.logo span{color:var(--dim);font-weight:400}
+.stat{font-family:var(--mono);font-size:14px;background:var(--panel);border:1px solid var(--line);padding:5px 10px;border-radius:8px}
+.stat b{color:var(--cyan)}
+.stat.timer b{color:var(--green);font-size:17px}
+.stat.timer.warn b{color:var(--amber)}
+.stat.timer.crit b{color:var(--red);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.spacer{flex:1}
+.bar{height:3px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .4s}
+
+nav.tabs{display:flex;gap:6px;padding:10px 0;flex-wrap:wrap}
+nav.tabs button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:7px 14px;border-radius:8px;font-family:var(--mono);font-size:13px}
+nav.tabs button.on{color:var(--bg);background:var(--green);border-color:var(--green);font-weight:700}
+nav.tabs button:hover:not(.on){color:var(--text);border-color:var(--dim)}
+
+/* welcome */
+#welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+.welcome-card{max-width:680px;width:100%}
+.ascii{color:var(--green);font-size:12px;line-height:1.15;margin:0 0 14px;overflow:auto}
+h1,h2,h3{line-height:1.2;margin:0 0 10px}
+h1{font-size:28px}
+h2{font-size:20px}
+.lead{color:var(--dim);margin:0 0 16px}
+input[type=text],input[type=password],textarea,select{width:100%;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:8px;font-family:var(--mono);font-size:14px}
+input:focus,textarea:focus,select:focus{outline:2px solid #38d6ff55;border-color:var(--cyan)}
+textarea{resize:vertical;min-height:70px}
+.btn{background:var(--green);color:#04210f;border:0;padding:10px 18px;border-radius:8px;font-weight:700}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.warn{background:var(--amber);color:#2b1d00}
+.btn.danger{background:var(--red);color:#2b0006}
+ul.rules{padding-left:20px;color:var(--dim)}
+ul.rules li{margin:4px 0}
+.ethics{border-left:3px solid var(--amber);background:#ffc2470f;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+
+/* board */
+.cat{margin:22px 0 8px;display:flex;align-items:baseline;gap:10px}
+.cat h2{margin:0}
+.cat small{color:var(--dim);font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ch{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;color:var(--text);transition:.15s;position:relative}
+.ch:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.ch .t{font-weight:700;margin-bottom:6px}
+.ch .m{display:flex;justify-content:space-between;color:var(--dim);font-family:var(--mono);font-size:13px}
+.ch .pts{color:var(--amber)}
+.ch.done{border-color:#39ff8866;background:#0f2a1c}
+.ch.done .t::after{content:" ✓";color:var(--green)}
+.ch.done .pts{color:var(--green)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:820px;padding:22px;position:relative}
+.mclose{position:absolute;top:12px;right:12px;background:var(--panel2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:8px;font-size:18px}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin-right:6px}
+.tag.pts{color:var(--amber);border-color:#ffc24755}
+.body p{margin:10px 0}
+.body .cipher,.cipher{font-family:var(--mono);background:#0b111a;border:1px dashed var(--cyan);color:var(--cyan);padding:12px;border-radius:8px;word-break:break-all;margin:10px 0;font-size:14px;user-select:all}
+.flagrow{display:flex;gap:8px;margin-top:16px}
+.flagrow input{flex:1}
+.msg{margin-top:10px;font-family:var(--mono);font-size:14px;min-height:20px}
+.msg.ok{color:var(--green)}.msg.bad{color:var(--red)}
+.hints{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.hint{background:#ffc2470f;border-left:3px solid var(--amber);padding:8px 12px;margin:8px 0;border-radius:0 8px 8px 0;font-size:14px}
+pre.code{background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;margin:10px 0}
+pre.hexd{background:#05080c;color:#9fe8b8;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px;margin:10px 0}
+
+/* mock UI components used in challenges */
+.mock{background:#fff;color:#1b1f23;border-radius:12px;padding:14px;margin:12px 0;font-family:var(--sans);font-size:14px}
+.mock .hd{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7b5cff,#2dd4ff);flex:none}
+.mock .who b{display:block}
+.mock .who small{color:#667}
+.photo{height:170px;border-radius:10px;background:linear-gradient(180deg,#26324a,#141b2b);margin:10px 0;position:relative;overflow:hidden;color:#fff}
+.photo .monitor{position:absolute;left:18px;top:18px;width:150px;height:90px;border:4px solid #0a0e14;border-radius:6px;background:#0d2a3b;font:11px var(--mono);padding:6px;color:#6fe}
+.photo .badge{position:absolute;right:26px;top:10px;width:120px;background:#fff;color:#111;border-radius:8px;padding:8px;text-align:center;font:11px var(--mono);box-shadow:0 4px 12px #0008}
+.photo .badge::before{content:"";display:block;width:26px;height:6px;background:#999;border-radius:4px;margin:-14px auto 8px}
+.photo .badge .nm{font-weight:700;font-size:13px}
+.photo .desk{position:absolute;left:0;right:0;bottom:0;height:34px;background:#3a2c20}
+.photo .note{position:absolute;left:190px;bottom:42px;background:#ffe66d;color:#333;padding:6px 8px;font:11px var(--mono);transform:rotate(-4deg);border-radius:2px}
+.mock .feed{border-top:1px solid #e3e6ea;margin-top:10px;padding-top:10px}
+.exif{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:10px 0}
+.exif td{border-bottom:1px solid var(--line);padding:5px 8px}
+.exif td:first-child{color:var(--dim);width:38%}
+.pkt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:10px 0;display:block;overflow:auto}
+.pkt th,.pkt td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pkt th{color:var(--dim);position:sticky;top:0;background:var(--panel)}
+.pkt tr.tls td{color:#8fa}.pkt tr.dns td{color:#8cf}.pkt tr.ftp td{color:#fc8}
+.email{border:1px solid #d0d7de;border-radius:10px;padding:12px;margin:10px 0;background:#fff;color:#1b1f23}
+.email .from{font-size:13px;color:#555}
+.email .subj{font-weight:700;margin:4px 0}
+.email .btns{display:flex;gap:8px;margin-top:8px}
+.email .btns button{padding:5px 12px;border-radius:6px;border:1px solid #bbb;background:#f4f6f8;color:#222}
+.email .btns button.sel-p{background:#ffdede;border-color:#e33;color:#900;font-weight:700}
+.email .btns button.sel-l{background:#dcfbe7;border-color:#2a7;color:#065;font-weight:700}
+.email a{color:#0969da}
+.loginbox{background:#0b111a;border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.loginbox label{display:block;margin:8px 0 3px;color:var(--dim);font-size:13px}
+.loginbox .q{font-family:var(--mono);font-size:12.5px;color:var(--amber);margin-top:10px;word-break:break-all}
+.loginbox .res{margin-top:10px;font-family:var(--mono);font-size:13px}
+.res.ok{color:var(--green)}.res.bad{color:var(--red)}
+
+/* terminal */
+.term{background:#05080c;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0}
+.term .bar2{background:#0f1622;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--dim);display:flex;gap:6px;align-items:center}
+.term .dot{width:10px;height:10px;border-radius:50%;background:#ff5d6c}.term .dot:nth-child(2){background:#ffc247}.term .dot:nth-child(3){background:#39ff88}
+#tout{height:420px;overflow:auto;padding:12px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;word-break:break-word;color:#cfe}
+#tout .cmd{color:var(--green)}#tout .err{color:var(--red)}#tout .sys{color:var(--cyan)}#tout .dim{color:var(--dim)}
+.tin{display:flex;align-items:center;border-top:1px solid var(--line);padding:8px 12px;gap:8px;font-family:var(--mono);font-size:13px}
+.tin span{color:var(--green);white-space:nowrap}
+.tin input{border:0;background:transparent;padding:0;outline:0!important;flex:1;color:#fff}
+
+/* toolkit */
+.tk{display:grid;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.row label{color:var(--dim);font-size:13px}
+.row input[type=text]{width:140px}
+.row input[type=number]{width:80px;background:#0b111a;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:8px;font-family:var(--mono)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--green);color:#04210f;font-weight:700;padding:10px 20px;border-radius:99px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--red);color:#2b0006}
+footer{color:var(--dim);font-size:12px;text-align:center;padding:30px 0 40px}
+table.sum{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+table.sum td,table.sum th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.sum td:last-child,table.sum th:last-child{text-align:right}
+.pace{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:14px}
+.pace b{font-family:var(--mono);color:var(--cyan)}
+@media(max-width:560px){.stat{font-size:12px;padding:4px 7px}h1{font-size:23px}}
+
+/* ---- collection additions ---- */
+.logo small{color:var(--dim);font-weight:400;font-size:12px;margin-left:8px;letter-spacing:1px;text-transform:uppercase}
+.subtitle{font-family:var(--mono);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;font-size:13px;margin:-6px 0 14px}
+.pickrow{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.pickrow select{width:auto;min-width:150px}
+.pickrow.ok{background:#39ff8810}.pickrow.no{background:#ff5d6c12}
+.ordl{list-style:none;padding:0;margin:10px 0}
+.ordl li{display:flex;gap:8px;align-items:center;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:14px}
+.ordl li span{flex:1}
+.ordl li button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;width:30px;height:30px}
+.logv{background:#05080c;border:1px solid var(--line);border-radius:8px;height:280px;overflow:auto;padding:8px 10px;font-family:var(--mono);font-size:12px;white-space:pre;color:#bcd}
+.logv mark{background:#ffc24744;color:#ffe;padding:0 1px}
+.sbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.sbar input[type=text]{flex:1;min-width:180px}
+.sbar span{font-family:var(--mono);font-size:13px;color:var(--dim)}
+.serp{background:#fff;color:#1b1f23;border-radius:10px;padding:12px 14px;margin:10px 0;font-family:var(--sans)}
+.serp .r{margin:10px 0}.serp .r a{color:#1a0dab;font-size:16px;text-decoration:none;display:block}
+.serp .r .u{color:#0b6b2b;font-size:12.5px}.serp .r p{margin:2px 0;color:#444;font-size:13.5px}
+.gmap{display:grid;gap:2px;margin:10px 0;max-width:460px}
+.gmap button{aspect-ratio:1;border:1px solid #2a3850;background:#0e1623;color:var(--text);border-radius:4px;font-size:15px;padding:0;position:relative}
+.gmap button small{position:absolute;left:3px;top:1px;font-size:9px;color:var(--dim);font-family:var(--mono)}
+.gmap button.river{background:#12324d}.gmap button.road{background:#262d3a}.gmap button.pick{outline:2px solid var(--amber)}
+canvas.lsb{width:100%;max-width:520px;image-rendering:pixelated;border:1px solid var(--line);border-radius:8px;display:block;margin:10px 0}
+.profile{border:1px solid #d0d7de;border-radius:10px;padding:10px 12px;margin:8px 0;background:#fff;color:#1b1f23}
+.profile .site{font-size:12px;color:#667;font-family:var(--mono)}
+table.sum td.l,table.sum th.l{text-align:left}
+.whois{white-space:pre;font-family:var(--mono);font-size:12.5px;background:#0b111a;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto}
+
+</style>
+</head>
+<body>
+<!-- ============ WELCOME ============ -->
+<section id="welcome" class="hidden">
+  <div class="card welcome-card">
+    <pre class="ascii mono">
+  ____      _               ___                   _
+ / ___|   _| |__   ___ _ __ / _ \ _   _  ___  ___| |_
+| |  | | | | '_ \ / _ \ '__| | | | | | |/ _ \/ __| __|
+| |__| |_| | |_) |  __/ |  | |_| | |_| |  __/\__ \ |_
+ \____\__, |_.__/ \___|_|   \__\_\\__,_|\___||___/\__|
+      |___/                                            </pre>
+    <div class="subtitle">Linux command line edition</div>
+    <h1>Welcome, operative.</h1>
+    <p class="lead">A 90-minute introduction to the Linux command line, the skill behind servers, hacking tools and most of the internet. Everything happens in a pretend computer, so you can try, break and retry with no risk.</p>
+    <ul class="rules">
+      <li>Each challenge hides a <b>flag</b> in the format <code>CTF{something_like_this}</code>. Find it, submit it, bank the points.</li>
+      <li>Hints are available but <b>cost points</b> (10% for the first, 30% for the second).</li>
+      <li>You have <b>one clock</b> for everything (90 minutes). Skip hard ones and come back &ndash; harder challenges are worth more.</li>
+      <li>The <b>Terminal</b> tab is a simulated Linux computer. It only knows the commands listed under <code>help</code>, and nothing you do there can affect a real machine.</li>
+      <li>Stuck on a command? Type <code>man</code> followed by its name, for example <code>man find</code>.</li>
+      <li>Work in teams of 2&ndash;4. Talk to each other. That's how real security teams work.</li>
+    </ul>
+    <div class="ethics"><b>&#9878;&#65039; Rules of engagement:</b> Everything here is fictional or simulated. In the real world, only test systems you own or have <b>written permission</b> to test. Unauthorised access is a crime (in the UK, the Computer Misuse Act 1990). Skills for defence, not harm.</div>
+    <label for="teamname" class="lead" style="display:block;margin-bottom:6px">Team name</label>
+    <input id="teamname" type="text" maxlength="30" placeholder="e.g. Null Pointers" autocomplete="off">
+    <p style="margin:16px 0 0"><button class="btn" id="startbtn">&#9654; Start the clock</button></p>
+    <p class="lead" style="margin:12px 0 0;font-size:13px">Progress saves in this browser, so refreshing won't lose your score. Use one device per team.</p>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+<header class="top">
+  <div class="wrap">
+    <div class="topin">
+      <div class="logo">CYBER<span>QUEST</span><small>Terminal Trainer</small></div>
+      <div class="stat">Team <b id="hTeam">&ndash;</b></div>
+      <div class="spacer"></div>
+      <div class="stat">Score <b id="hScore">0</b></div>
+      <div class="stat">Solved <b id="hSolved">0/0</b></div>
+      <div class="stat timer" id="timerBox">&#9201; <b id="hTimer">90:00</b></div>
+    </div>
+  </div>
+  <div class="bar"><i id="hBar"></i></div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs">
+    <button data-tab="board" class="on">🎯 Challenges</button>
+    <button data-tab="lab">💻 Terminal</button>
+    <button data-tab="tools">🧰 Toolkit</button>
+    <button data-tab="brief">📋 Briefing</button>
+  </nav>
+
+  <section id="tab-board"></section>
+
+  <section id="tab-lab" class="hidden">
+    <h2>💻 Terminal</h2>
+    <p class="lead">A simulated Linux terminal with a <b>made-up file system</b>. You cannot break anything: every command only changes this pretend computer, and it resets if you reload the page. Type <code>help</code> for the commands, or <code>man ls</code> to read the manual for one.</p>
+    <div class="term">
+      <div class="bar2"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:8px">student@trainer – simulated</span></div>
+      <div id="tout"></div>
+      <div class="tin"><span id="tprompt">student@kali:~$</span><input id="tinp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    </div>
+  </section>
+
+  <section id="tab-tools" class="hidden">
+    <h2>&#129520; Toolkit</h2>
+    <p class="lead">Handy decoders, ciphers and hash tools, running entirely in your browser. Real CTF players use sites like CyberChef too &ndash; feel free.</p>
+    <div class="tk">
+      <div class="card">
+        <h3>Encode / decode</h3>
+        <textarea id="tkIn" placeholder="Input&hellip;" rows="4"></textarea>
+        <div class="row" id="tkBtns"></div>
+        <textarea id="tkOut" placeholder="Output&hellip;" rows="4" readonly></textarea>
+        <div class="row"><button class="btn sec sm" id="tkSwap">&#8645; Output &rarr; Input</button></div>
+      </div>
+      <div class="card">
+        <h3>Ciphers</h3>
+        <div class="row">
+          <label>Caesar shift</label><input type="number" id="cShift" value="3" min="1" max="25">
+          <button class="btn sec sm" id="cGo">Shift</button>
+          <button class="btn sec sm" id="cBrute">Try all 25</button>
+        </div>
+        <div class="row">
+          <label>Vigen&egrave;re key</label><input type="text" id="vKey" placeholder="key">
+          <button class="btn sec sm" id="vEnc">Encrypt</button>
+          <button class="btn sec sm" id="vDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>Rail fence rails</label><input type="number" id="rRails" value="3" min="2" max="10">
+          <button class="btn sec sm" id="rEnc">Encrypt</button>
+          <button class="btn sec sm" id="rDec">Decrypt</button>
+        </div>
+        <div class="row">
+          <label>XOR key (hex byte)</label><input type="text" id="xKey" placeholder="e.g. 2a">
+          <button class="btn sec sm" id="xGo">XOR hex input</button>
+          <button class="btn sec sm" id="xBrute">Brute-force all 256</button>
+        </div>
+        <p class="lead" style="font-size:13px;margin:6px 0 0">Caesar, Vigen&egrave;re and Rail fence read the Input box. XOR expects the input as hex (e.g. <code>1f 2a 3b</code> or <code>1f2a3b</code>).</p>
+      </div>
+      <div class="card">
+        <h3>Hash cracker</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">Paste a wordlist (one word per line) in the Input box above, enter a target hash, pick the algorithm (and a salt if you have one), and see if any word matches. Exactly how attackers use leaked password lists.</p>
+        <div class="row"><input type="text" id="hTarget" placeholder="target hash" style="width:100%;max-width:520px"></div>
+        <div class="row">
+          <label>Algorithm</label><select id="hAlg" style="width:auto"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256">SHA-256</option></select>
+          <label>Salt</label><input type="text" id="hSalt" placeholder="(optional)" style="width:130px">
+          <select id="hSaltPos" style="width:auto"><option value="pre">salt + word</option><option value="post">word + salt</option></select>
+        </div>
+        <div class="row"><button class="btn sec sm" id="hGo">Crack</button><button class="btn sec sm" id="hOne">Just hash my input</button></div>
+      </div>
+      <div class="card">
+        <h3>Number theory helper</h3>
+        <p class="lead" style="font-size:13px;margin:0 0 8px">For RSA and Diffie&ndash;Hellman style maths. Uses big integers, so large numbers are fine.</p>
+        <div class="row"><label>a</label><input type="text" id="nA" style="width:130px"><label>b</label><input type="text" id="nB" style="width:130px"><label>m</label><input type="text" id="nM" style="width:130px"></div>
+        <div class="row">
+          <button class="btn sec sm" id="nPow">a<sup>b</sup> mod m</button>
+          <button class="btn sec sm" id="nInv">inverse of a mod m</button>
+          <button class="btn sec sm" id="nGcd">gcd(a, b)</button>
+          <button class="btn sec sm" id="nFac">factorise a</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-brief" class="hidden">
+    <div class="card">
+      <h2>&#128203; Briefing</h2>
+      <p class="lead">Suggested pacing for your 90 minutes:</p>
+      <div class="pace">
+        <b>0–10 min</b><span>Warm-up, then learn the five core commands: pwd, ls, cd, cat, grep.</span>
+        <b>10–35 min</b><span>Getting around: hidden files, folders inside folders, absolute and relative paths.</span>
+        <b>35–65 min</b><span>Working with files: copy, move, delete and write files, then search for things with find and grep.</span>
+        <b>65–85 min</b><span>Pipes, then file permissions with chmod.</span>
+        <b>85–90 min</b><span>Good habits and a final check.</span>
+      </div>
+      <h3 style="margin-top:20px">Flag tips</h3>
+      <ul class="rules">
+        <li>Flags look like <code>CTF{...}</code>. Not case-sensitive, but spelling and underscores matter.</li>
+        <li>Linux is <b>case-sensitive</b>: <code>Notes.txt</code> and <code>notes.txt</code> are different files.</li>
+        <li>Look before you act: <code>pwd</code> and <code>ls</code> are free, and a typo with <code>rm</code> is not.</li>
+        <li>Check scripts in the <code>checks</code> folder tell you whether you did a task correctly. Run them with <code>./checks/name.sh</code>.</li>
+        <li>Stuck? Try the simplest thing first. Most challenges are puzzles, not brute force.</li>
+      </ul>
+      <div class="row" style="margin-top:18px">
+        <button class="btn warn" id="finishBtn">&#127937; Finish &amp; show report</button>
+        <button class="btn sec" id="reportBtn">&#128196; View current report</button>
+      </div>
+      <div id="hostbox" class="hidden" style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <h3>&#128295; Host controls</h3>
+        <div class="row">
+          <button class="btn sec sm" id="hostPlus">+10 minutes</button>
+          <button class="btn danger sm" id="hostReset">Reset this browser</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="wrap">CyberQuest &middot; Terminal Trainer &middot; every system, person and company here is fictional &middot; stay legal, stay curious</footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="mbox" id="mbox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+const CONFIG={"id":"linux","name":"Terminal Trainer","cats":{"intro":{"name":"Warm-Up","icon":"🚀","blurb":"Start here"},"nav":{"name":"Getting Around","icon":"🧭","blurb":"Where am I, and what is here?"},"files":{"name":"Working With Files","icon":"📁","blurb":"Make, copy, move and delete"},"search":{"name":"Finding Things","icon":"🔍","blurb":"Search files and logs"},"perms":{"name":"Permissions","icon":"🔐","blurb":"Who can read, write and run?"},"habits":{"name":"Good Habits","icon":"🧠","blurb":"Think like an admin"}},"minutes":90,"lab":null};
+const DATA=[{"id":"lx_src","cat":"intro","title":"Read the Room","pts":50,"diff":1,"body":"<p>Right-click this page and choose <b>\"View Page Source\"</b> (or press <code>Ctrl+U</code>). Near the top of the HTML there is a comment with your first flag.</p>","h":"1brocu0nq2w","hints":["Look for an HTML comment: <code>&lt;!-- ... --&gt;</code>, near the &lt;head&gt;.","It is in the first 10 lines of the document, right after the &lt;title&gt; tag."],"widget":null},{"id":"lx_cmds","cat":"intro","title":"Five Commands","pts":75,"diff":1,"body":"<p>Five commands do most of the everyday work in a terminal. Match each command to what it does. Open the <b>Terminal</b> tab and try them if you are unsure (or type <code>man ls</code>).</p>","h":"16zfl1ayngx","hints":["<code>pwd</code> stands for \"print working directory\".","<code>cat</code> prints a file. <code>grep</code> hunts for words."],"widget":"classify","wd":{"options":["Show where I am","List the files here","Change folder","Show what is inside a file","Search for text"],"win":"those five will take you a long way","retry":"Each purpose is used exactly once.","items":[{"t":"<code>pwd</code>","a":0},{"t":"<code>ls</code>","a":1},{"t":"<code>cd</code>","a":2},{"t":"<code>cat</code>","a":3},{"t":"<code>grep</code>","a":4}]}},{"id":"lx_where","cat":"nav","title":"Where Am I?","pts":75,"diff":1,"body":"<p>Open the <b>Terminal</b> tab. When you open a terminal you start in your <b>home folder</b>. The command <code>pwd</code> (print working directory) shows the full path of the folder you are in.</p><p>Run it. The flag is <code>CTF{path}</code> using the path it prints.</p>","h":"2d5x7mps3lr","hints":["Type <code>pwd</code> and press Enter.","The path starts with a <code>/</code>. Put it inside the braces exactly as printed."],"widget":null,"loose":true},{"id":"lx_welcome","cat":"nav","title":"List and Read","pts":75,"diff":1,"body":"<p><code>ls</code> lists the files in the current folder. <code>cat &lt;file&gt;</code> prints what is inside one. There is a friendly file in your home folder called <code>welcome.txt</code>. Read it to find the flag.</p>","h":"d5er1w14e0","hints":["Run <code>ls</code> first to see the file names.","<code>cat welcome.txt</code>"],"widget":null},{"id":"lx_hidden","cat":"nav","title":"Hidden in Plain Sight","pts":100,"diff":2,"body":"<p>In Linux, any file whose name starts with a dot (<code>.</code>) is <b>hidden</b>: a plain <code>ls</code> skips it. Settings files are usually hidden so they do not clutter your view, but they are not secret. There is a hidden note in your home folder.</p>","h":"1m3frvnotcf","hints":["The option <code>-a</code> means \"all\". Try <code>ls -a</code>.","The file is called <code>.hidden_note</code>. Read it with <code>cat .hidden_note</code>."],"widget":null},{"id":"lx_cd","cat":"nav","title":"Down the Rabbit Hole","pts":125,"diff":2,"body":"<p>A file called <code>budget_note.txt</code> is buried inside the <code>documents</code> folder, in the <b>2026</b> reports. Use <code>cd</code> to move into folders and <code>ls</code> to look around, then read it.</p><p>Useful: <code>cd ..</code> goes back up one level, and <code>cd</code> on its own takes you home.</p>","h":"yg08anlboj","hints":["Path: documents, then reports, then 2026. You can do it in one go: <code>cd documents/reports/2026</code>.","Once you are in the right folder, <code>ls</code> shows two files. Read <code>budget_note.txt</code> with <code>cat</code>."],"widget":null},{"id":"lx_paths","cat":"nav","title":"Absolute or Relative?","pts":100,"diff":2,"body":"<p>An <b>absolute path</b> starts at the top of the file system with <code>/</code> and works from anywhere, like a full postal address. A <b>relative path</b> starts from where you are now, like \"second door on the left\". <code>..</code> means \"the folder above\".</p><p>Classify each path.</p>","h":"11aazawtgbp","hints":["An absolute path always begins with a forward slash.","<code>.</code> means \"here\" and <code>..</code> means \"up one\". Both are relative."],"widget":"classify","wd":{"options":["Absolute","Relative"],"win":"you can read an address","retry":"Does it start with a /?","items":[{"t":"<code>/var/log/auth.log</code>","a":0},{"t":"<code>documents/cv.txt</code>","a":1},{"t":"<code>../projects</code>","a":1},{"t":"<code>/home/student/notes.txt</code>","a":0},{"t":"<code>./secret_script.sh</code>","a":1},{"t":"<code>/</code>","a":0}]}},{"id":"lx_backup","cat":"files","title":"Make a Backup","pts":150,"diff":2,"body":"<p>Before changing something, make a copy. In your home folder:</p><pre class=\"code\">mkdir backup\ncp notes.txt backup</pre><p><code>mkdir</code> makes a folder. <code>cp &lt;file&gt; &lt;place&gt;</code> copies a file and leaves the original alone. When you are done, run the checker, which prints the flag only if you did it right:</p><pre class=\"code\">./checks/check_backup.sh</pre>","h":"21m3did6r5i","hints":["Make sure you are in your home folder first (<code>cd</code> on its own takes you there, <code>pwd</code> confirms it).","<code>mkdir backup</code>, then <code>cp notes.txt backup</code>, then <code>./checks/check_backup.sh</code>."],"widget":null},{"id":"lx_mv","cat":"files","title":"Move and Rename","pts":150,"diff":2,"body":"<p><code>mv</code> does two jobs: it <b>moves</b> a file to another folder, and it <b>renames</b> a file (renaming is just moving to a new name). Your task: take <code>downloads/draft.txt</code>, put it in the <code>documents</code> folder, and call it <code>final.txt</code>. Then run <code>./checks/check_move.sh</code>.</p>","h":"235yzf81crp","hints":["The pattern is <code>mv &lt;from&gt; &lt;to&gt;</code>. The \"to\" can include a new file name.","From your home folder: <code>mv downloads/draft.txt documents/final.txt</code>"],"widget":null},{"id":"lx_rm","cat":"files","title":"No Recycle Bin","pts":125,"diff":2,"body":"<p><code>rm &lt;file&gt;</code> deletes a file <b>permanently</b>. There is no recycle bin and no undo, so read the name twice. Remove the junk file <code>downloads/old_installer.tmp</code> and leave <code>keep_me.txt</code> alone. Then run <code>./checks/check_rm.sh</code>.</p>","h":"2b9fwbot5pe","hints":["Use <code>ls downloads</code> to see both files before you delete anything.","<code>rm downloads/old_installer.tmp</code>"],"widget":null},{"id":"lx_echo","cat":"files","title":"Write a File","pts":150,"diff":3,"body":"<p><code>echo</code> prints text. Add <code>&gt;</code> and the text goes into a <b>file</b> instead (this replaces whatever was there). <code>&gt;&gt;</code> adds to the end instead.</p><pre class=\"code\">echo \"some text\" &gt; filename</pre><p>Create a file called <code>hello.txt</code> in your home folder containing exactly <code>hello world</code>. Then run <code>./checks/check_echo.sh</code>.</p>","h":"1jm7tvyf2rs","hints":["Be in your home folder, then use <code>echo</code> with the words in quotes.","<code>echo \"hello world\" &gt; hello.txt</code>. Check it with <code>cat hello.txt</code>."],"widget":null},{"id":"lx_find","cat":"search","title":"Find It","pts":150,"diff":2,"body":"<p>Somewhere under your <code>projects</code> folder is a file called <code>passwords_old.txt</code>. You could <code>cd</code> through every folder, or you could ask the computer:</p><pre class=\"code\">find &lt;where to look&gt; -name \"&lt;file name&gt;\"</pre><p>Find the file, then <code>cat</code> it using the path <code>find</code> printed.</p>","h":"26ybd1vigi4","hints":["<code>find projects -name \"passwords_old.txt\"</code> (from your home folder). Use <code>*</code> as a wildcard, like <code>\"*.txt\"</code>.","Copy the path it prints and give it to <code>cat</code>."],"widget":null},{"id":"lx_grep","cat":"search","title":"Count the Failures","pts":175,"diff":3,"body":"<p>The file <code>/var/log/auth.log</code> records every login attempt on this server. Lines with <code>Failed password</code> are failed attempts. How many are there?</p><p>You can read the file with <code>cat</code>, but there is a faster way: <code>grep</code> finds matching lines, and <code>grep -c</code> counts them. You can also <b>pipe</b> (<code>|</code>) the output of one command into another, such as <code>... | wc -l</code> to count lines.</p><p>The flag is <code>CTF{number}</code>.</p>","h":"1l92cuocqr1","hints":["<code>grep -c \"Failed password\" /var/log/auth.log</code>","Or: <code>grep \"Failed password\" /var/log/auth.log | wc -l</code>. Both give the same number."],"widget":null},{"id":"lx_pipe","cat":"search","title":"Who Keeps Trying?","pts":225,"diff":3,"body":"<p>Now find the attacker. Which IP address has the <b>most</b> failed logins in <code>/var/log/auth.log</code>? Build a <b>pipeline</b>, where each command passes its result to the next:</p><pre class=\"code\">grep \"Failed\" /var/log/auth.log     only the failed lines\n| cut -d \" \" -f 9                   keep the 9th space-separated piece (the IP)\n| sort                              put equal IPs next to each other\n| uniq -c                           count each run of equal lines\n| sort -nr                          biggest number first\n| head -1                           just the top one</pre><p>Type it as one line (no line breaks). The flag is <code>CTF{ip-address}</code>.</p>","h":"1u1ynq45tcm","hints":["Try the pipeline one stage at a time, adding a <code>|</code> each time, so you can see what each command does.","<code>grep Failed /var/log/auth.log | cut -d \" \" -f 9 | sort | uniq -c | sort -nr | head -1</code>"],"widget":null},{"id":"lx_permnum","cat":"perms","title":"Permission Numbers","pts":125,"diff":3,"body":"<p>Each permission is a number: <b>read = 4</b>, <b>write = 2</b>, <b>execute = 1</b>. Add them up for each of three groups: the <b>owner</b>, the <b>group</b>, then <b>everyone else</b>. So <code>chmod 640 file</code> means owner 4+2 (read and write), group 4 (read), others 0 (nothing).</p><p>Match each description to the right number.</p>","h":"1h3xat73k05","hints":["6 = 4+2 (read and write). 7 = 4+2+1 (everything). 5 = 4+1 (read and run). 4 = read only.","There are three digits: owner, group, others."],"widget":"classify","wd":{"options":["600","644","755","777"],"win":"you can do the sums","retry":"Work out each digit: 4 read, 2 write, 1 execute.","items":[{"t":"Only the owner can read and write. Nobody else can do anything.","a":0},{"t":"The owner can read and write. Everyone else can only read.","a":1},{"t":"The owner can do everything. Everyone else can read and run it.","a":2},{"t":"Absolutely everybody can read, write and run it (almost never a good idea).","a":3}]}},{"id":"lx_lsl","cat":"perms","title":"Read the Permissions","pts":125,"diff":2,"body":"<p><code>ls -l</code> shows a permission string at the start of each line, such as <code>-rw-r--r--</code>. After the first character (file or folder), read it in three groups of three: <b>owner</b>, <b>group</b>, <b>others</b>. A letter means allowed and a dash means not allowed (<code>r</code> read, <code>w</code> write, <code>x</code> execute).</p><p>In the <code>documents</code> folder, one file can be <b>changed by anyone</b> on the system. Which one? The flag is <code>CTF{file name}</code>.</p>","h":"21wzhz00gzp","hints":["Run <code>ls -l documents</code> and look for a <code>w</code> in the last group of three letters.","<code>-rw-rw-rw-</code> lets everybody write."],"widget":null,"loose":true},{"id":"lx_chmod","cat":"perms","title":"Make It Run","pts":175,"diff":3,"body":"<p>There is a script in your home folder called <code>secret_script.sh</code>. Try to run it with <code>./secret_script.sh</code> (the <code>./</code> means \"the one in this folder\"). It refuses: the file is not <b>executable</b>. Check with <code>ls -l</code>: there is no <code>x</code>.</p><p>Add the execute permission with <code>chmod +x</code>, then run it again.</p>","h":"23t2wmc3lv4","hints":["<code>chmod +x secret_script.sh</code>","Then <code>./secret_script.sh</code>. Check <code>ls -l</code> to see the <code>x</code> appear."],"widget":null},{"id":"lx_order","cat":"habits","title":"Look Before You Delete","pts":100,"diff":2,"body":"<p>Experienced admins are careful, because a terminal does exactly what it is told. Put these steps for <b>safely deleting a file</b> in the best order.</p>","h":"csc05hdlul","hints":["Checking things (pwd, ls) comes before the dangerous command.","Confirming the result comes last."],"widget":"order","wd":{"items":["<code>pwd</code>: check which folder you are in","<code>ls</code>: look at what is there and check the exact name","<code>cp file backup/</code>: copy it somewhere safe if it might matter","<code>rm file</code>: delete it","<code>ls</code>: confirm that it is gone and nothing else was"],"retry":"Check first, act second, confirm last."}}];
+CONFIG.lab={"local":{"plain":true,"tree":{"/":["bin","etc","home","tmp","var"],"/bin":["ls","cat","grep"],"/bin/ls":{"c":"(binary file)","m":"-rwxr-xr-x","o":"root"},"/bin/cat":{"c":"(binary file)","m":"-rwxr-xr-x","o":"root"},"/bin/grep":{"c":"(binary file)","m":"-rwxr-xr-x","o":"root"},"/etc":["hostname","motd"],"/etc/hostname":{"c":"trainer","o":"root"},"/etc/motd":{"c":"Welcome to the training server. Everything here is pretend.","o":"root"},"/tmp":[],"/var":["log"],"/var/log":["auth.log"],"/var/log/auth.log":{"c":"2026-03-02 00:02:17 sshd Failed password for root from 203.0.113.9 port 50011\n2026-03-02 00:05:27 sshd Accepted password for student from 10.0.0.5 port 40114\n2026-03-02 00:09:30 sshd Failed password for root from 203.0.113.9 port 50033\n2026-03-02 00:14:26 sshd Failed password for admin from 198.51.100.4 port 50044\n2026-03-02 00:16:44 sshd Failed password for root from 203.0.113.9 port 50055\n2026-03-02 00:19:55 sshd Accepted password for deploy from 10.0.0.5 port 40142\n2026-03-02 00:23:59 sshd Failed password for test from 192.0.2.77 port 50077\n2026-03-02 00:28:56 sshd Failed password for root from 203.0.113.9 port 50088\n2026-03-02 00:31:15 sshd Failed password for admin from 198.51.100.4 port 50099\n2026-03-02 00:34:27 sshd Failed password for root from 203.0.113.9 port 50110\n2026-03-02 00:38:32 sshd Accepted password for student from 10.0.0.5 port 40177\n2026-03-02 00:43:30 sshd Failed password for root from 203.0.113.9 port 50132\n2026-03-02 00:45:50 sshd Failed password for test from 192.0.2.77 port 50143\n2026-03-02 00:49:03 sshd Failed password for admin from 198.51.100.4 port 50154\n2026-03-02 00:53:09 sshd Accepted password for deploy from 10.0.0.5 port 40205\n2026-03-02 00:58:08 sshd Failed password for root from 203.0.113.9 port 50176","m":"-rw-r--r--","o":"root"},"/home":["student"],"/home/student":[".bashrc",".hidden_note","checks","documents","downloads","notes.txt","projects","secret_script.sh","welcome.txt"],"/home/student/.bashrc":"# ~/.bashrc: settings for your shell (nothing to see here)\nalias ll=\"ls -l\"","/home/student/.hidden_note":"You found me! Files whose names start with a dot are hidden from a plain ls.\nCTF{dotfiles_are_just_files}","/home/student/welcome.txt":"Welcome to the Terminal Trainer!\nYou just used ls to see this file and cat to read it.\nCTF{ls_and_cat_are_your_eyes}","/home/student/notes.txt":"Things to remember:\n- the terminal is case-sensitive: Notes.txt and notes.txt are different files\n- Tab completes names, the Up arrow repeats old commands","/home/student/secret_script.sh":{"c":"#!/bin/bash\necho \"Access granted.\"","m":"-rw-r--r--","run":"Access granted.\nCTF{chmod_plus_x_unlocks_scripts}"},"/home/student/checks":["check_backup.sh","check_echo.sh","check_move.sh","check_rm.sh"],"/home/student/checks/check_backup.sh":{"c":"#!/bin/bash\n# (check script)","m":"-rwxr-xr-x","run":{"when":[{"exists":"/home/student/backup/notes.txt"},{"exists":"/home/student/notes.txt"}],"yes":"✔ backup/notes.txt exists and the original is still there.\nCTF{copies_keep_originals_safe}","no":"✘ Not yet. Make a folder called backup in your home folder and copy notes.txt into it."}},"/home/student/checks/check_echo.sh":{"c":"#!/bin/bash\n# (check script)","m":"-rwxr-xr-x","run":{"when":[{"has":["/home/student/hello.txt","hello world"]}],"yes":"✔ hello.txt contains your message.\nCTF{redirect_writes_files}","no":"✘ Not yet. hello.txt should exist in your home folder and contain: hello world"}},"/home/student/checks/check_move.sh":{"c":"#!/bin/bash\n# (check script)","m":"-rwxr-xr-x","run":{"when":[{"exists":"/home/student/documents/final.txt"},{"missing":"/home/student/downloads/draft.txt"}],"yes":"✔ draft.txt was moved into documents and renamed final.txt.\nCTF{mv_moves_and_renames}","no":"✘ Not yet. Move downloads/draft.txt into the documents folder AND rename it to final.txt."}},"/home/student/checks/check_rm.sh":{"c":"#!/bin/bash\n# (check script)","m":"-rwxr-xr-x","run":{"when":[{"missing":"/home/student/downloads/old_installer.tmp"},{"exists":"/home/student/downloads/keep_me.txt"}],"yes":"✔ The junk file is gone and keep_me.txt is safe.\nCTF{rm_has_no_recycle_bin}","no":"✘ Not yet. Delete downloads/old_installer.tmp, but leave keep_me.txt alone!"}},"/home/student/documents":["cv.txt","diary.txt","reports","shared_notes.txt","todo.txt"],"/home/student/documents/cv.txt":"Alex Student - CV\nSkills: curiosity, patience, typing","/home/student/documents/todo.txt":"1. revise networking\n2. practise the command line\n3. do not delete everything","/home/student/documents/diary.txt":{"c":"Dear diary, the terminal is quite fun actually.","m":"-rw-------"},"/home/student/documents/shared_notes.txt":{"c":"Anyone can edit this file.","m":"-rw-rw-rw-"},"/home/student/documents/reports":["2025","2026"],"/home/student/documents/reports/2025":["summary.txt"],"/home/student/documents/reports/2025/summary.txt":"Wrong year. Look at the newer reports.","/home/student/documents/reports/2026":["budget_note.txt","q1.txt"],"/home/student/documents/reports/2026/q1.txt":"Q1 summary: all targets met.","/home/student/documents/reports/2026/budget_note.txt":"Budget note. You navigated here with cd and ls.\nCTF{cd_takes_you_places}","/home/student/downloads":["draft.txt","keep_me.txt","old_installer.tmp"],"/home/student/downloads/draft.txt":"My essay draft. It needs a better name.","/home/student/downloads/keep_me.txt":"Important! Do not delete.","/home/student/downloads/old_installer.tmp":"(temporary installer data, safe to delete)","/home/student/projects":["archive","game","website"],"/home/student/projects/game":["README.md","main.py"],"/home/student/projects/game/README.md":"# My game\nA text adventure.","/home/student/projects/game/main.py":"print(\"You are in a dark room.\")","/home/student/projects/website":["index.html"],"/home/student/projects/website/index.html":"<h1>My site</h1>","/home/student/projects/archive":["2019"],"/home/student/projects/archive/2019":["notes.txt","passwords_old.txt"],"/home/student/projects/archive/2019/notes.txt":"Old project notes. Nothing useful.","/home/student/projects/archive/2019/passwords_old.txt":"Old passwords file. (Never keep passwords in a plain text file!)\nCTF{find_finds_it_all}"},"home":"/home/student","user":"student","name":"trainer","readonly":["/etc","/var","/bin"],"protect":["/home/student","/home/student/checks"],"man":{"ls":"LS - list directory contents\n  ls          list the files here\n  ls -l       long format: permissions, owner, size, date\n  ls -a       also show hidden files (names starting with a dot)\n  ls <folder> list a different folder","cd":"CD - change directory\n  cd <folder>   move into a folder\n  cd ..         go up one level\n  cd ~ (or just cd)  go home\n  cd /          go to the top of the file system","cat":"CAT - show the contents of a file\n  cat <file>","pwd":"PWD - print the working directory (where am I?)","grep":"GREP - search for text\n  grep <text> <file>      show lines that contain the text\n  grep -i ...             ignore upper/lower case\n  grep -c ...             count the matching lines\n  grep -n ...             show line numbers\n  grep -r <text> <folder> search every file in a folder","find":"FIND - search for files by name\n  find <folder> -name \"<pattern>\"\n  find . -name \"*.txt\"    (* matches anything)\n  find . -type d          only folders","mkdir":"MKDIR - make a directory\n  mkdir <name>","cp":"CP - copy a file\n  cp <file> <new name or folder>","mv":"MV - move or rename a file\n  mv <file> <folder>      move it\n  mv <old name> <new name> rename it","rm":"RM - remove a file. THERE IS NO RECYCLE BIN.\n  rm <file>\n  rm -r <folder>  remove a folder and everything in it","chmod":"CHMOD - change permissions\n  chmod +x <file>   allow it to be run as a program\n  chmod 644 <file>  r=4 w=2 x=1, in the order owner, group, others","echo":"ECHO - print text\n  echo hello           prints hello\n  echo hello > file    writes it into a file (replacing it)\n  echo more >> file    adds it to the end of a file","wc":"WC - count\n  wc -l <file>   count the lines","sort":"SORT - sort lines\n  sort <file>   sort A-Z\n  sort -n       sort by number   -r  reverse","uniq":"UNIQ - remove repeated neighbouring lines\n  uniq -c   also count them (sort first!)","cut":"CUT - pick a column out of each line\n  cut -d \" \" -f 2   split on spaces and show the 2nd piece"},"welcome":"You are student@trainer. Try: pwd, then ls. Type \"help\" for commands, or \"man <command>\" for a manual page.\n","help":"Commands you can use:\n  pwd  ls [-l] [-a]  cd  cat  head  tail  wc  sort  uniq  cut  grep [-i -c -n -r]  find\n  mkdir  touch  cp  mv  rm  chmod  echo (with > and >>)  ./script\n  man <command>   history   clear\n  Pipes work too:  cat file | grep text | wc -l\n  Tip: Up/Down arrows bring back old commands."}};
+const ENC={"lx_cmds":"Q1RGe2ZpdmVfY29tbWFuZHNfZG93bn0=","lx_paths":"Q1RGe3BhdGhzX2FyZV9hZGRyZXNzZXN9","lx_permnum":"Q1RGezY0NF9tZWFuc19yd19yX3J9","lx_order":"Q1RGe2xvb2tfYmVmb3JlX3lvdV9kZWxldGV9"};
+/* ---------- helpers ---------- */
+const A=s=>atob(s);
+const dec=id=>atob(ENC[id]);              // flags that a widget reveals on success
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function cyrb53(str,seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+/* "loose" flags ignore punctuation/spacing inside the answer: CTF{Angel of the North} == CTF{angel_of_the_north} */
+const normFlag=(f,loose)=>{f=f.trim().toLowerCase();return loose?f.replace(/[^a-z0-9{}]/g,''):f};
+const hashFlag=(f,loose)=>cyrb53(normFlag(f,loose)).toString(36);
+const isMatch=(c,v)=>[].concat(c.h).includes(hashFlag(v,c.loose));
+function toast(t,bad){const el=$('#toast');el.textContent=t;el.className='toast show'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='toast',2600);}
+const CATS=CONFIG.cats;
+
+/* ---------- state ---------- */
+const KEY='cq_state_'+CONFIG.id;
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{team:'',start:0,solved:{},hints:{},ended:false,extra:0};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const params=new URLSearchParams(location.search);
+const baseMin=Math.max(1,parseInt(params.get('minutes'))||CONFIG.minutes||90);
+const duration=()=>(baseMin*60+(S.extra||0))*1000;
+const hintCost=(c,n)=>n<=0?0:(n===1?Math.round(c.pts*.1):Math.round(c.pts*.3));
+const score=()=>Object.values(S.solved).reduce((a,b)=>a+b.pts,0);
+const total=()=>DATA.reduce((a,c)=>a+c.pts,0);
+const timeLeft=()=>S.start?Math.max(0,S.start+duration()-Date.now()):duration();
+const over=()=>S.ended||(S.start&&timeLeft()<=0);
+const fmt=ms=>{const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+/* ---------- boot ---------- */
+function boot(){
+  document.title='CyberQuest – '+CONFIG.name;
+  if(!S.start){$('#welcome').classList.remove('hidden');$('#app').classList.add('hidden');return}
+  $('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');
+  if(params.has('host'))$('#hostbox').classList.remove('hidden');
+  $('#hTeam').textContent=S.team;
+  renderBoard();updateHeader();tick();
+  if(!boot.timer)boot.timer=setInterval(tick,1000);
+  if(typeof initLab==='function')initLab();
+  initTools();
+}
+$('#startbtn').onclick=()=>{
+  const n=$('#teamname').value.trim();
+  if(!n){$('#teamname').focus();toast('Pick a team name first',true);return}
+  S.team=n;S.start=Date.now();S.solved={};S.hints={};S.ended=false;S.extra=0;save();boot();
+};
+$('#teamname').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startbtn').click()});
+
+function updateHeader(){
+  $('#hScore').textContent=score();
+  $('#hSolved').textContent=Object.keys(S.solved).length+'/'+DATA.length;
+  $('#hBar').style.width=(Object.keys(S.solved).length/DATA.length*100)+'%';
+}
+function tick(){
+  const left=timeLeft();
+  $('#hTimer').textContent=S.ended?'DONE':fmt(left);
+  const tb=$('#timerBox');tb.classList.toggle('warn',left<=15*60e3&&left>5*60e3);tb.classList.toggle('crit',left<=5*60e3&&!S.ended);
+  if(!S.ended&&left<=0){S.ended=true;save();showReport(true)}
+}
+
+/* ---------- tabs ---------- */
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const names=$$('#tabs button').map(x=>x.dataset.tab);
+  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  names.forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  if(b.dataset.tab==='lab')setTimeout(()=>$('#tinp')&&$('#tinp').focus(),50);
+};
+
+/* ---------- board ---------- */
+function renderBoard(){
+  let h='';
+  for(const k of Object.keys(CATS)){
+    const list=DATA.filter(c=>c.cat===k);if(!list.length)continue;
+    const done=list.filter(c=>S.solved[c.id]).length;
+    h+=`<div class="cat"><h2>${CATS[k].icon} ${CATS[k].name}</h2><small>${CATS[k].blurb} · ${done}/${list.length}</small></div><div class="grid">`;
+    for(const c of list){
+      const s=S.solved[c.id];
+      h+=`<button class="ch ${s?'done':''}" data-id="${c.id}"><div class="t">${esc(c.title)}</div><div class="m"><span>${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span><span class="pts">${s?'+'+s.pts:c.pts} pts</span></div></button>`;
+    }
+    h+='</div>';
+  }
+  $('#tab-board').innerHTML=h;
+  $$('.ch').forEach(b=>b.onclick=()=>openChallenge(b.dataset.id));
+}
+
+/* ---------- challenge modal ---------- */
+function closeModal(){$('#modal').classList.add('hidden');document.body.style.overflow=''}
+$('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').classList.contains('hidden')&&!$('#mbox').dataset.report)closeModal()});
+
+function openChallenge(id){
+  const c=DATA.find(x=>x.id===id);if(!c)return;
+  const solved=S.solved[id];
+  const mb=$('#mbox');mb.dataset.report='';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <div><span class="tag">${CATS[c.cat].icon} ${CATS[c.cat].name}</span><span class="tag pts">${c.pts} pts</span><span class="tag">${'★'.repeat(c.diff)}${'☆'.repeat(3-c.diff)}</span></div>
+    <h2 style="margin-top:12px">${esc(c.title)}</h2>
+    <div class="body">${c.body}</div>
+    <div id="widget"></div>
+    <div class="flagrow"><input type="text" id="flagIn" placeholder="CTF{...}" autocomplete="off" spellcheck="false" ${solved?'disabled':''}><button class="btn" id="flagGo" ${solved?'disabled':''}>Submit</button></div>
+    <div class="msg ${solved?'ok':''}" id="flagMsg">${solved?'✓ Solved for '+solved.pts+' points':''}</div>
+    <div class="hints" id="hintBox"></div>`;
+  $('#modal').classList.remove('hidden');document.body.style.overflow='hidden';
+  $('.mclose',mb).onclick=closeModal;
+  renderHints(c);
+  if(c.widget&&WIDGETS[c.widget])WIDGETS[c.widget]($('#widget'),c);
+  const submit=()=>{
+    if(over()){$('#flagMsg').className='msg bad';$('#flagMsg').textContent='Time is up – submissions are closed.';return}
+    const v=$('#flagIn').value;if(!v.trim())return;
+    if(isMatch(c,v)){
+      const pts=Math.max(0,c.pts-hintCost(c,S.hints[id]||0));
+      S.solved[id]={pts,t:Date.now()};save();renderBoard();updateHeader();
+      $('#flagMsg').className='msg ok';$('#flagMsg').textContent='✓ Correct! +'+pts+' points';
+      $('#flagIn').disabled=true;$('#flagGo').disabled=true;toast('🏴 Flag captured! +'+pts);
+      if(Object.keys(S.solved).length===DATA.length)setTimeout(()=>showReport(false),1200);
+    }else{
+      $('#flagMsg').className='msg bad';$('#flagMsg').textContent='✗ Not quite. Check the format and spelling.';
+    }
+  };
+  $('#flagGo').onclick=submit;
+  $('#flagIn').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+  if(!solved)setTimeout(()=>$('#flagIn').focus(),30);
+}
+function renderHints(c){
+  const used=S.hints[c.id]||0;const box=$('#hintBox');
+  let h='';
+  for(let i=0;i<used;i++)h+=`<div class="hint"><b>Hint ${i+1}:</b> ${c.hints[i]}</div>`;
+  if(used<c.hints.length&&!S.solved[c.id]){
+    const cost=hintCost(c,used+1);
+    h+=`<button class="btn sec sm" id="hintBtn">💡 Reveal hint ${used+1} (−${cost} pts)</button>`;
+  }
+  box.innerHTML=h;
+  const b=$('#hintBtn');
+  if(b)b.onclick=()=>{S.hints[c.id]=(S.hints[c.id]||0)+1;save();renderHints(c)};
+}
+
+/* ---------- report ---------- */
+function showReport(timeUp){
+  const rows=DATA.filter(c=>S.solved[c.id]).map(c=>`<tr><td>${esc(c.title)}</td><td>${esc(CATS[c.cat].name)}</td><td>${S.solved[c.id].pts}</td></tr>`).join('');
+  const missed=DATA.filter(c=>!S.solved[c.id]).length;
+  const mb=$('#mbox');mb.dataset.report='1';
+  mb.innerHTML=`<button class="mclose" aria-label="Close">×</button>
+    <h2>${timeUp?'⏰ Time\'s up!':'📄 Mission report'}</h2>
+    <p class="lead">${esc(CONFIG.name)} · Team <b>${esc(S.team)}</b> · <b style="color:var(--amber)">${score()}</b> / ${total()} points · ${Object.keys(S.solved).length}/${DATA.length} flags${missed?'':' · 🏆 PERFECT'}</p>
+    <table class="sum"><tr><th>Challenge</th><th>Category</th><th>Points</th></tr>${rows||'<tr><td colspan="3">No flags yet – keep hunting!</td></tr>'}</table>
+    <div class="row" style="margin-top:16px"><button class="btn" id="copyRep">📋 Copy summary</button><button class="btn sec" id="closeRep">Close</button></div>
+    <p class="lead" style="font-size:13px">Show this screen to your host to log your score.</p>`;
+  $('#modal').classList.remove('hidden');
+  $('.mclose',mb).onclick=closeModal;$('#closeRep').onclick=closeModal;
+  $('#copyRep').onclick=()=>{
+    const t=`CyberQuest ${CONFIG.name} – Team ${S.team}: ${score()}/${total()} pts, ${Object.keys(S.solved).length}/${DATA.length} flags`;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied!'),()=>toast(t));
+  };
+}
+$('#reportBtn').onclick=()=>showReport(false);
+$('#finishBtn').onclick=()=>{if(confirm('Finish now? Your clock stops and submissions close.')){S.ended=true;S.endedAt=Date.now();save();tick();showReport(false)}};
+$('#hostPlus').onclick=()=>{S.extra=(S.extra||0)+600;S.ended=false;save();tick();toast('+10 minutes')};
+$('#hostReset').onclick=()=>{if(confirm('Wipe progress in this browser?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}};
+
+const WIDGETS={};
+
+/* =====================================================================
+   COMMON WIDGETS – reusable interactive challenge components.
+   A challenge opts in with  widget:'name'  and configures it with  wd:{...}
+   Widgets that "reveal" a flag use dec(c.id), so the flag is never stored in plain text.
+   ===================================================================== */
+
+/* classify: pick the right option for every item (also used for "match each X to its Y")
+   wd:{prompt, options:['Legal','Illegal'], items:[{t:'text', a:0}], win:'message'}            */
+WIDGETS.classify=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+
+    w.items.map((it,i)=>`<div class="pickrow" data-i="${i}"><div>${it.t}</div><select><option value="">Choose…</option>${w.options.map((o,j)=>`<option value="${j}">${o}</option>`).join('')}</select></div>`).join('')+
+    `<p style="margin-top:12px"><button class="btn sm" id="clGo">Check answers</button></p><div class="res" id="clR"></div>`;
+  $('#clGo',el).onclick=()=>{
+    const R=$('#clR',el),rows=$$('.pickrow',el);
+    if(rows.some(r=>$('select',r).value==='')){R.className='res bad';R.textContent='Answer every row first.';return}
+    let ok=0;
+    rows.forEach((r,i)=>{const good=+$('select',r).value===w.items[i].a;if(good)ok++;r.classList.toggle('ok',good);r.classList.toggle('no',!good)});
+    if(ok===rows.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – '+(w.win||'all correct')+'. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+rows.length+' correct – the red rows are wrong. '+(w.retry||'Think again.')}
+  };
+};
+
+/* order: put the steps in the right order (wd:{prompt, items:['first','second',...]} given in CORRECT order) */
+WIDGETS.order=(el,c)=>{
+  const w=c.wd,n=w.items.length;
+  let seed=cyrb53(c.id)%2147483647||7;const rnd=()=>(seed=seed*48271%2147483647)/2147483647;
+  let idx=[...Array(n).keys()];
+  do{for(let i=n-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}}while(idx.every((v,i)=>v===i)||idx[0]===0);
+  const draw=()=>{
+    $('#ordL',el).innerHTML=idx.map((v,p)=>`<li><span>${w.items[v]}</span><button data-p="${p}" data-d="-1" aria-label="Move up">▲</button><button data-p="${p}" data-d="1" aria-label="Move down">▼</button></li>`).join('');
+  };
+  el.innerHTML=(w.prompt?`<p class="lead" style="margin-top:14px">${w.prompt}</p>`:'')+`<ol class="ordl" id="ordL"></ol><p><button class="btn sm" id="ordGo">Check order</button></p><div class="res" id="ordR"></div>`;
+  draw();
+  $('#ordL',el).onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const p=+b.dataset.p,q=p+ +b.dataset.d;if(q<0||q>=n)return;
+    [idx[p],idx[q]]=[idx[q],idx[p]];draw();
+  };
+  $('#ordGo',el).onclick=()=>{
+    const R=$('#ordR',el),ok=idx.filter((v,p)=>v===p).length;
+    if(ok===n){R.className='res ok';R.innerHTML='Perfect order. Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+' of '+n+' are in the right place. '+(w.retry||'Keep shuffling.')}
+  };
+};
+
+/* logs: searchable log viewer with a live match counter (wd:{lines:[...], hint:'…'}) */
+WIDGETS.logs=(el,c)=>{
+  const w=c.wd;
+  el.innerHTML=`<div class="sbar"><input type="text" id="lgQ" placeholder="${esc(w.placeholder||'Filter lines… (e.g. FAILED)')}" autocomplete="off" spellcheck="false"><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgRe"> regex</label><label style="color:var(--dim);font-size:13px"><input type="checkbox" id="lgI" checked> ignore case</label><span id="lgN"></span></div><div class="logv" id="lgV"></div>`;
+  const draw=()=>{
+    const q=$('#lgQ',el).value,re=$('#lgRe',el).checked,ic=$('#lgI',el).checked;let test=()=>true,rx=null;
+    if(q){try{rx=new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g');test=l=>{rx.lastIndex=0;return rx.test(l)}}catch(e){$('#lgN',el).textContent='bad regex';return}}
+    const rows=w.lines.filter(test);
+    $('#lgV',el).innerHTML=rows.map(l=>{const s=esc(l);if(!rx)return s;rx.lastIndex=0;return esc(l).replace(new RegExp(re?q:q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),ic?'gi':'g'),m=>'<mark>'+m+'</mark>')}).join('\n')||'(no matching lines)';
+    $('#lgN',el).textContent=rows.length+' / '+w.lines.length+' lines';
+  };
+  ['input','change'].forEach(ev=>el.addEventListener(ev,draw));draw();
+};
+
+/* ---- carried over from the original CyberQuest ---- */
+
+/* SQL injection login simulator (fake app, fake DB) */
+WIDGETS.sqli=(el,c)=>{
+  const w=c.wd||{};
+  el.innerHTML=`<div class="loginbox"><b>${w.title||'🏦 NovaBank Staff Portal'}</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <label>Username</label><input type="text" id="sqU" autocomplete="off" spellcheck="false">
+    <label>Password</label><input type="text" id="sqP" autocomplete="off" spellcheck="false">
+    <p style="margin:12px 0 0"><button class="btn sm" id="sqGo">Log in</button></p>
+    <div class="q" id="sqQ"></div><div class="res" id="sqR"></div></div>`;
+  const run=()=>{
+    const u=$('#sqU').value,p=$('#sqP').value;
+    $('#sqQ').textContent="SELECT * FROM users WHERE username='"+u+"' AND password='"+p+"';";
+    const R=$('#sqR');
+    const taut=/'\s*or\s+(['"]?)(\w+)\1\s*=\s*(['"]?)\2\3?/i;
+    const bypass=/^\s*admin\s*'\s*(--|#|\/\*)/i.test(u)||taut.test(u)||taut.test(p);
+    if(bypass){R.className='res ok';R.innerHTML='✔ Query returned a row. Logged in as <b>admin</b>.<br>Secret: <b>'+esc(dec(c.id))+'</b><br><span style="color:var(--dim)">The fix: parameterised queries, never string concatenation.</span>'}
+    else if((u+p).includes("'")){R.className='res bad';R.textContent="ERROR 1064 (42000): You have an error in your SQL syntax; check the manual near '"+(u+p).split("'").slice(1).join("'")+"' – the database just told you it's injectable!"}
+    else{R.className='res bad';R.textContent='✘ Invalid username or password.'}
+  };
+  $('#sqGo').onclick=run;
+  ['sqU','sqP'].forEach(i=>$('#'+i).addEventListener('keydown',e=>{if(e.key==='Enter')run()}));
+};
+
+/* Cookie tampering */
+WIDGETS.cookie=(el,c)=>{
+  const orig=btoa(JSON.stringify({user:'guest',role:'user'}));
+  el.innerHTML=`<div class="loginbox"><b>🖥 NovaCorp Intranet</b> <span class="mono" style="color:var(--dim);font-size:12px">(simulated)</span>
+    <p style="margin:8px 0;color:var(--dim);font-size:14px">You're logged in as <b>guest</b>. The browser sends this on every request:</p>
+    <label>Cookie</label><textarea id="ckV" rows="2" spellcheck="false">session=${orig}</textarea>
+    <p style="margin:12px 0 0"><button class="btn sm" id="ckGo">GET /admin</button> <button class="btn sec sm" id="ckReset">Reset</button></p>
+    <div class="res" id="ckR"></div></div>`;
+  $('#ckReset').onclick=()=>{$('#ckV').value='session='+orig;$('#ckR').textContent=''};
+  $('#ckGo').onclick=()=>{
+    const R=$('#ckR');
+    try{
+      const m=$('#ckV').value.trim().match(/^session=(.+)$/);if(!m)throw 0;
+      const o=JSON.parse(atob(m[1].trim()));
+      if(o&&o.role==='admin'){R.className='res ok';R.innerHTML='HTTP/1.1 200 OK<br>Welcome to the admin panel, '+esc(o.user||'?')+'.<br>Flag: <b>'+esc(dec(c.id))+'</b>'}
+      else{R.className='res bad';R.textContent='HTTP/1.1 403 Forbidden – hello '+(o.user||'?')+', your role is "'+(o.role||'?')+'". Admins only.'}
+    }catch(e){R.className='res bad';R.textContent='HTTP/1.1 400 Bad Request – session cookie could not be parsed.'}
+  };
+};
+
+/* Phish or legit?  wd:{mails:[{from,s,b,a:'P'|'L'}]} */
+WIDGETS.phish=(el,c)=>{
+  const mails=c.wd.mails,ans={},noun=c.wd.noun||'email';
+  el.innerHTML='<p class="lead" style="margin-top:14px">Classify each '+noun+', then submit your verdicts.</p>'+mails.map((m,i)=>`<div class="email"><div class="from">${c.wd.noun?'':'From: '}${m.from}</div><div class="subj">${m.s}</div><div>${m.b}</div><div class="btns"><button data-i="${i}" data-v="P">🎣 Phishing</button><button data-i="${i}" data-v="L">✅ Legit</button></div></div>`).join('')+'<p><button class="btn sm" id="phGo">Submit verdicts</button></p><div class="res" id="phR"></div>';
+  el.onclick=e=>{
+    const b=e.target.closest('.btns button');if(!b)return;
+    ans[b.dataset.i]=b.dataset.v;
+    $$('button',b.parentNode).forEach(x=>x.className=x.dataset.v===ans[b.dataset.i]?(x.dataset.v==='P'?'sel-p':'sel-l'):'');
+  };
+  $('#phGo',el).onclick=()=>{
+    const R=$('#phR',el);
+    if(Object.keys(ans).length<mails.length){R.className='res bad';R.textContent='Answer all '+mails.length+' first.';return}
+    const ok=mails.filter((m,i)=>ans[i]===m.a).length;
+    if(ok===mails.length){R.className='res ok';R.innerHTML=ok+'/'+ok+' – sharp eyes! Flag: <b>'+esc(dec(c.id))+'</b>'}
+    else{R.className='res bad';R.textContent=ok+'/'+mails.length+' correct. Re-read the sender addresses, the urgency and what each email wants you to do.'}
+  };
+};
+
+/* branch: a choose-your-response scenario. Reaching an ending with end:'win' reveals the flag.
+   wd:{start:'a', nodes:{ a:{text:'…', choices:[{t:'…', to:'b'}]}, b:{end:'win'|'lose', text:'…'} }} */
+WIDGETS.branch=(el,c)=>{
+  const w=c.wd;let cur=w.start;
+  const draw=()=>{
+    const n=w.nodes[cur];
+    if(n.end){
+      const win=n.end==='win';
+      el.innerHTML=`<div class="loginbox"><p>${n.text}</p><p class="res ${win?'ok':'bad'}">${win?'✔ Well handled. Flag: <b>'+esc(dec(c.id))+'</b>':'✘ The attack succeeded.'}</p><p><button class="btn sec sm" id="brR">↺ Start again</button></p></div>`;
+      $('#brR',el).onclick=()=>{cur=w.start;draw()};return;
+    }
+    el.innerHTML=`<div class="loginbox"><p>${n.text}</p>`+n.choices.map((ch,i)=>`<p><button class="btn sec sm" data-i="${i}" style="text-align:left;white-space:normal;height:auto">${ch.t}</button></p>`).join('')+'</div>';
+    $$('button[data-i]',el).forEach(b=>b.onclick=()=>{cur=n.choices[+b.dataset.i].to;draw()});
+  };
+  draw();
+};
+
+
+/* =========== TOOLKIT =========== */
+const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+const MORSE_R=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+const caesar=(s,k)=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)});
+const vig=(s,key,dir)=>{key=key.toLowerCase().replace(/[^a-z]/g,'');if(!key)return 'Enter a key (letters only)';let i=0;return s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;const k=(key.charCodeAt(i++%key.length)-97)*dir;return String.fromCharCode(((c.charCodeAt(0)-b+k)%26+26)%26+b)})};
+const utf8bytes=s=>[...new TextEncoder().encode(s)];
+const fromBytes=b=>{try{return new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(b))}catch(e){return String.fromCharCode(...b)}};
+const parseHex=s=>{const h=s.replace(/0x|[\s,:]/gi,'');if(!/^([0-9a-f]{2})+$/i.test(h))throw new Error('Not valid hex');return h.match(/../g).map(x=>parseInt(x,16))};
+function md5(str){
+  const bytes=new TextEncoder().encode(str);
+  const K=new Uint32Array(64),S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296);
+  const n=bytes.length,total=((n+8>>6)+1)<<6;
+  const buf=new Uint8Array(total);buf.set(bytes);buf[n]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(total-8,(n*8)>>>0,true);dv.setUint32(total-4,Math.floor(n*8/4294967296),true);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let off=0;off<total;off+=64){
+    const M=new Uint32Array(16);for(let i=0;i<16;i++)M[i]=dv.getUint32(off+i*4,true);
+    let A_=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}
+      else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}
+      else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A_+K[i]+M[g])>>>0;
+      A_=D;D=C;C=B;
+      B=(B+((F<<S[i])|(F>>>(32-S[i]))))>>>0;
+    }
+    a0=(a0+A_)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  const out=new DataView(new ArrayBuffer(16));
+  out.setUint32(0,a0,true);out.setUint32(4,b0,true);out.setUint32(8,c0,true);out.setUint32(12,d0,true);
+  return [...new Uint8Array(out.buffer)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function sha1(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  let h0=0x67452301,h1=0xEFCDAB89,h2=0x98BADCFE,h3=0x10325476,h4=0xC3D2E1F0;const w=new Uint32Array(80);
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<80;i++){const x=w[i-3]^w[i-8]^w[i-14]^w[i-16];w[i]=(x<<1)|(x>>>31)}
+    let a=h0,bb=h1,c=h2,d=h3,e=h4;
+    for(let i=0;i<80;i++){
+      let f,k;
+      if(i<20){f=(bb&c)|(~bb&d);k=0x5A827999}else if(i<40){f=bb^c^d;k=0x6ED9EBA1}else if(i<60){f=(bb&c)|(bb&d)|(c&d);k=0x8F1BBCDC}else{f=bb^c^d;k=0xCA62C1D6}
+      const tmp=(((a<<5)|(a>>>27))+f+e+k+w[i])>>>0;e=d;d=c;c=((bb<<30)|(bb>>>2))>>>0;bb=a;a=tmp;
+    }
+    h0=(h0+a)>>>0;h1=(h1+bb)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;
+  }
+  return [h0,h1,h2,h3,h4].map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const SHA256K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256(str){
+  const b=new TextEncoder().encode(str),l=b.length,t=((l+8>>6)+1)<<6,buf=new Uint8Array(t);buf.set(b);buf[l]=0x80;
+  const dv=new DataView(buf.buffer);dv.setUint32(t-4,(l*8)>>>0);dv.setUint32(t-8,Math.floor(l*8/4294967296));
+  const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Uint32Array(64);
+  const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<t;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0}
+    let [a,bb,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+SHA256K[i]+w[i])>>>0;
+      const S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;
+    }
+    [a,bb,c,d,e,f,g,h].forEach((v,i)=>H[i]=(H[i]+v)>>>0);
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+const HASHES={md5,sha1,sha256};
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const b32enc=s=>{let bits='',o='';for(const b of utf8bytes(s))bits+=b.toString(2).padStart(8,'0');for(let i=0;i<bits.length;i+=5)o+=B32[parseInt(bits.slice(i,i+5).padEnd(5,'0'),2)];while(o.length%8)o+='=';return o};
+const b32dec=s=>{const t=s.toUpperCase().replace(/[^A-Z2-7]/g,'');let bits='';for(const ch of t)bits+=B32.indexOf(ch).toString(2).padStart(5,'0');const out=[];for(let i=0;i+8<=bits.length;i+=8)out.push(parseInt(bits.slice(i,i+8),2));return fromBytes(out)};
+const atbash=s=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode(b+25-(c.charCodeAt(0)-b))});
+function railPattern(n,len){const p=[];let r=0,d=1;for(let i=0;i<len;i++){p.push(r);if(n>1){if(r===0)d=1;else if(r===n-1)d=-1;r+=d}}return p}
+function railEnc(s,n){const p=railPattern(n,s.length);return [...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b).map(i=>s[i]).join('')}
+function railDec(s,n){const p=railPattern(n,s.length),order=[...Array(s.length).keys()].sort((a,b)=>p[a]-p[b]||a-b),out=[];order.forEach((pos,i)=>out[pos]=s[i]);return out.join('')}
+function freqTable(s){
+  const t=s.toUpperCase().replace(/[^A-Z]/g,''),m={};for(const c of t)m[c]=(m[c]||0)+1;
+  const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  if(!rows.length)return 'No letters found.';
+  return 'Letters: '+t.length+'\n'+rows.map(([c,n])=>c+'  '+String(n).padStart(3)+'  '+(n/t.length*100).toFixed(1).padStart(5)+'%  '+'█'.repeat(Math.round(n/rows[0][1]*30))).join('\n')+'\n\nEnglish: E T A O I N S H R are usually the most common.';
+}
+const bi=s=>{if(!/^\s*-?\d+\s*$/.test(s))throw new Error('Enter whole numbers in a, b and m');return BigInt(s.trim())};
+function modpow(a,b,m){let r=1n;a%=m;while(b>0n){if(b&1n)r=r*a%m;a=a*a%m;b>>=1n}return r}
+function egcd(a,b){if(b===0n)return[a,1n,0n];const[g,x,y]=egcd(b,a%b);return[g,y,x-(a/b)*y]}
+const gcd=(a,b)=>{a=a<0n?-a:a;b=b<0n?-b:b;while(b){[a,b]=[b,a%b]}return a};
+function modinv(a,m){const[g,x]=egcd(((a%m)+m)%m,m);if(g!==1n)throw new Error('No inverse: gcd(a,m) = '+g);return((x%m)+m)%m}
+function factorise(n){if(n<2n)throw new Error('Enter a number ≥ 2');const f=[];let d=2n;while(d*d<=n&&d<10000000n){while(n%d===0n){f.push(d);n/=d}d+=d===2n?1n:2n}if(n>1n)f.push(n);return f}
+
+const TOOLS=[
+  ['Base64 →',s=>fromBytes([...atob(s.trim())].map(c=>c.charCodeAt(0)))],
+  ['→ Base64',s=>btoa(String.fromCharCode(...utf8bytes(s)))],
+  ['Base32 →',s=>b32dec(s)],
+  ['→ Base32',s=>b32enc(s)],
+  ['Hex →',s=>fromBytes(parseHex(s))],
+  ['→ Hex',s=>utf8bytes(s).map(b=>b.toString(16).padStart(2,'0')).join(' ')],
+  ['Binary →',s=>fromBytes(s.replace(/[^01]/g,'').match(/.{8}/g).map(b=>parseInt(b,2)))],
+  ['→ Binary',s=>utf8bytes(s).map(b=>b.toString(2).padStart(8,'0')).join(' ')],
+  ['Decimal →',s=>fromBytes(s.trim().split(/[\s,]+/).map(Number))],
+  ['→ Decimal',s=>utf8bytes(s).join(' ')],
+  ['Morse →',s=>s.trim().split(/\s*\/\s*|\s{3,}/).map(w=>w.split(/\s+/).map(x=>MORSE_R[x]||'?').join('')).join(' ')],
+  ['→ Morse',s=>s.toUpperCase().split(' ').map(w=>[...w].map(c=>MORSE[c]||'').filter(Boolean).join(' ')).join(' / ')],
+  ['ROT13',s=>caesar(s,13)],
+  ['Atbash',s=>atbash(s)],
+  ['URL decode',s=>decodeURIComponent(s)],
+  ['→ URL encode',s=>encodeURIComponent(s)],
+  ['Reverse',s=>[...s].reverse().join('')],
+  ['Letter frequency',s=>freqTable(s)],
+  ['MD5',s=>md5(s.replace(/[\r\n]+$/,''))],
+  ['SHA-1',s=>sha1(s.replace(/[\r\n]+$/,''))],
+  ['SHA-256',s=>sha256(s.replace(/[\r\n]+$/,''))]
+];
+function initTools(){
+  if(initTools.done)return;initTools.done=true;
+  const out=v=>{$('#tkOut').value=v};
+  const safe=f=>{try{out(f())}catch(e){out('⚠ '+(e.message||'Could not process that input'))}};
+  const row=$('#tkBtns');
+  TOOLS.forEach(([n,f])=>{const b=document.createElement('button');b.className='btn sec sm';b.textContent=n;b.onclick=()=>safe(()=>f($('#tkIn').value));row.appendChild(b)});
+  $('#tkSwap').onclick=()=>{$('#tkIn').value=$('#tkOut').value;out('')};
+  $('#cGo').onclick=()=>safe(()=>caesar($('#tkIn').value,+$('#cShift').value||0));
+  $('#cBrute').onclick=()=>safe(()=>{const s=$('#tkIn').value;let r='';for(let k=1;k<=25;k++)r+='shift '+String(k).padStart(2)+': '+caesar(s,k)+'\n';return r});
+  $('#vEnc').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,1));
+  $('#vDec').onclick=()=>safe(()=>vig($('#tkIn').value,$('#vKey').value,-1));
+  const rails=()=>{const n=+$('#rRails').value;if(!(n>=2&&n<=10))throw new Error('Rails must be 2–10');return n};
+  $('#rEnc').onclick=()=>safe(()=>railEnc($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#rDec').onclick=()=>safe(()=>railDec($('#tkIn').value.replace(/\s+$/,''),rails()));
+  $('#xGo').onclick=()=>safe(()=>{const k=parseInt($('#xKey').value,16);if(isNaN(k))throw new Error('Enter a key like 2a');return fromBytes(parseHex($('#tkIn').value).map(b=>b^k))});
+  $('#xBrute').onclick=()=>safe(()=>{const b=parseHex($('#tkIn').value);let r='';for(let k=0;k<256;k++){const t=b.map(x=>x^k);const s=String.fromCharCode(...t);if(/^[\x20-\x7e\n]+$/.test(s))r+='key '+k.toString(16).padStart(2,'0')+': '+s+'\n'}return r||'No fully printable results.'});
+  $('#hOne').onclick=()=>safe(()=>HASHES[$('#hAlg').value]($('#tkIn').value.replace(/[\r\n]+$/,'')));
+  $('#hGo').onclick=()=>safe(()=>{
+    const alg=$('#hAlg').value,len={md5:32,sha1:40,sha256:64}[alg];
+    const t=$('#hTarget').value.trim().toLowerCase();if(!new RegExp('^[0-9a-f]{'+len+'}$').test(t))throw new Error('For '+alg.toUpperCase()+' the target must be '+len+' hex characters');
+    const salt=$('#hSalt').value,pre=$('#hSaltPos').value==='pre',H=HASHES[alg];
+    const words=$('#tkIn').value.split(/\r?\n/).map(w=>w.trim()).filter(Boolean);
+    const hit=words.find(w=>H(pre?salt+w:w+salt)===t);
+    return hit?'🎯 MATCH: '+hit:'No match in '+words.length+' words.';
+  });
+  $('#nPow').onclick=()=>safe(()=>{const m=bi($('#nM').value);if(m<=0n)throw new Error('m must be positive');return String(modpow(bi($('#nA').value),bi($('#nB').value),m))});
+  $('#nInv').onclick=()=>safe(()=>String(modinv(bi($('#nA').value),bi($('#nM').value))));
+  $('#nGcd').onclick=()=>safe(()=>String(gcd(bi($('#nA').value),bi($('#nB').value))));
+  $('#nFac').onclick=()=>safe(()=>{const a=bi($('#nA').value);return a+' = '+factorise(a).join(' × ')});
+}
+
+/* =====================================================================
+   PENTEST LAB – a small, scripted, entirely fictional terminal.
+   Nothing here touches a network: every command just prints text defined in the quest's `lab` data.
+   ===================================================================== */
+const LAB=CONFIG.lab;
+const T={ctx:null,stack:[],mode:null,pending:null,hist:[],hi:0,cap:null};
+const dl=(...a)=>a;
+
+function mkLocal(){
+  const L=LAB.local;
+  if(L.tree){const home=L.home||'/home/student';
+    const fs={};for(const [k,v] of Object.entries(L.tree))fs[k]=Array.isArray(v)?v.slice():(v&&typeof v==='object'?{...v}:v);
+    return {kind:'local',user:L.user||'student',name:L.name||'kali',home,cwd:L.start||home,root:false,fs,host:null};}
+  const fs={'/home/student':Object.keys(L.files)};
+  for(const [n,v] of Object.entries(L.files))fs['/home/student/'+n]=v;
+  return {kind:'local',user:'student',name:'kali',home:'/home/student',cwd:'/home/student',root:false,fs,host:null};
+}
+function mkRemote(ip,user){
+  const h=LAB.hosts[ip],u=h.users[user];
+  return {kind:'remote',ip,host:h,user,name:h.name,home:u.home,cwd:u.home,root:false,fs:h.fs};
+}
+const promptStr=()=>{
+  if(T.pending)return T.pending.label;
+  if(T.mode==='ftp')return 'ftp>';
+  const c=T.ctx;return `${c.user}@${c.name}:${c.cwd===c.home?'~':c.cwd}${c.root?'#':'$'}`;
+};
+function tp(text,cls){
+  if(T.cap){T.cap.push(String(text));return}
+  const d=document.createElement('div');if(cls)d.className=cls;d.textContent=text;$('#tout').appendChild(d);$('#tout').scrollTop=1e9;
+}
+function setPrompt(){$('#tprompt').textContent=promptStr();$('#tinp').type=(T.pending&&T.pending.secret)?'password':'text'}
+
+function initLab(){
+  if(initLab.done)return;initLab.done=true;
+  T.ctx=mkLocal();
+  tp('CyberQuest Lab — simulated environment. Nothing here touches a real network.','sys');
+  tp(LAB.local.welcome||'Read scope.txt first. Type "help" for commands.\n','dim');setPrompt();
+  const inp=$('#tinp');
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const v=inp.value;inp.value='';
+      if(T.pending){tp(T.pending.label+(T.pending.secret?' ':' '+v),'cmd');const p=T.pending;T.pending=null;p.cb(v);setPrompt();return}
+      tp(promptStr()+' '+v,'cmd');
+      if(v.trim()){T.hist.push(v);T.hi=T.hist.length;try{runLine(v.trim())}catch(err){tp('error: '+err.message,'err')}}
+      setPrompt();
+    }else if(e.key==='ArrowUp'){if(T.hi>0){T.hi--;inp.value=T.hist[T.hi];e.preventDefault()}}
+    else if(e.key==='ArrowDown'){if(T.hi<T.hist.length-1){T.hi++;inp.value=T.hist[T.hi]}else{T.hi=T.hist.length;inp.value=''}e.preventDefault()}
+  });
+  $('#tout').onclick=()=>inp.focus();
+}
+
+/* ---- line handling, with simple pipes into grep/head/tail/wc ---- */
+function runLine(line){
+  if(T.mode==='ftp')return ftpCmd(line);
+  const rd=line.match(/^(.*?)\s*(>>?)\s*([^\s>|]+)\s*$/);
+  if(rd&&!/\|/.test(rd[1])&&rd[1]&&T.ctx.kind==='local'&&LAB.local.tree){
+    T.cap=[];try{runLine(rd[1])}finally{}
+    const text=T.cap.join('\n');T.cap=null;return writeFile(rd[3],text,rd[2]==='>>');
+  }
+  const parts=line.split('|').map(s=>s.trim());
+  if(parts.length===1)return runCmd(parts[0]);
+  T.cap=[];try{runCmd(parts[0])}finally{}
+  let text=T.cap.join('\n');T.cap=null;
+  for(const p of parts.slice(1))text=filterCmd(p,text);
+  if(text!=='')tp(text);
+}
+function filterCmd(p,text){
+  const tok=p.split(/\s+/),c=tok[0],lines=text.split('\n');
+  if(c==='grep'){
+    const flags=tok.filter(t=>t.startsWith('-')),pat=tok.slice(1).filter(t=>!t.startsWith('-')).join(' ').replace(/^["']|["']$/g,'');
+    const ic=flags.some(f=>f.includes('i')),cnt=flags.some(f=>f.includes('c')),inv=flags.some(f=>f.includes('v')),num=flags.some(f=>/^-[a-z]*n/.test(f));
+    const rx=new RegExp(pat.replace(/[.+?^${}()[\]\\]/g,'\\$&'),ic?'i':'');
+    const out=lines.map((l,i)=>[i+1,l]).filter(([i,l])=>rx.test(l)!==inv).map(([i,l])=>num?i+':'+l:l);return cnt?String(out.length):out.join('\n');
+  }
+  const nArg=()=>{const k=tok.indexOf('-n');if(k>=0&&/^\d+$/.test(tok[k+1]||''))return +tok[k+1];const t=tok.find(t=>/^-\d+$/.test(t));return t?+t.slice(1):10};
+  if(c==='head'){return lines.slice(0,nArg()).join('\n')}
+  if(c==='tail'){return lines.slice(-nArg()).join('\n')}
+  if(c==='cut'){const dm=p.match(/-d\s*(?:'(.*?)'|"(.*?)"|(\S+))/),fm=p.match(/-f\s*(\d+)/);if(!dm||!fm)return 'Usage: cut -d <delimiter> -f <field number>';const d=dm[1]??dm[2]??dm[3],f=+fm[1]-1;return lines.map(l=>l.split(d)[f]??'').join('\n')}
+  if(c==='wc'){return tok.includes('-l')?String(lines.filter(Boolean).length):`${lines.length} ${text.split(/\s+/).filter(Boolean).length} ${text.length}`}
+  if(c==='sort'){const fl=tok.filter(t=>/^-[a-z]+$/.test(t)).join(''),r=fl.includes('r'),o=lines.slice().sort(fl.includes('n')?(x,y)=>(parseFloat(x)||0)-(parseFloat(y)||0)||(x<y?-1:x>y?1:0):undefined);return (r?o.reverse():o).join('\n')}
+  if(c==='uniq'){const o=[];lines.forEach(l=>{if(o.length&&o[o.length-1][0]===l)o[o.length-1][1]++;else o.push([l,1])});return o.map(([l,n])=>tok.includes('-c')?String(n).padStart(4)+' '+l:l).join('\n')}
+  return c+': not available in this simulation';
+}
+function runCmd(line){
+  const tok=line.split(/\s+/),cmd=tok[0];
+  if(cmd==='clear'){$('#tout').innerHTML='';return}
+  if(cmd==='help')return tp(helpText(),'dim');
+  if(T.ctx.kind==='local'&&LAB.local.cmds&&dataCmd(line,tok,cmd))return;
+  if(T.ctx.kind==='local'&&!LAB.local.plain&&localOnly(line,tok,cmd))return;
+  if(T.ctx.kind==='remote'&&remoteOnly(line,tok,cmd))return;
+  shared(line,tok,cmd);
+}
+function helpText(){
+  if(T.ctx.kind==='local'&&LAB.local.help)return LAB.local.help;
+  return T.ctx.kind==='local'?`Commands on your machine:
+  nmap [-sn | -p- | -sV] <ip or range>   find hosts / open ports / versions
+  nc <ip> <port>          connect to a port (netcat)
+  curl <url>              fetch a web page (add -u user:pass for a login)
+  dirb <url>              check for common web paths
+  ftp <ip>                file transfer (once connected: ls, get <file>, quit)
+  ssh <user>@<ip>         remote login
+  ls [-l] / cat / grep / head / cd / pwd   look at files (you can use | pipes)
+  clear`:`Commands on the target (simulated shell):
+  ls [-l] [dir]   cat <file>   cd <dir>   pwd   whoami   id
+  grep <text> <file>   (or: cat <file> | grep <text>)
+  sudo -l                 list what you may run with sudo
+  sudo <command>          run something as root (if you are allowed)
+  exit                    log out`;
+}
+
+/* ---- commands that exist on both machines ---- */
+const resolvePath=(p,c)=>{
+  if(!p||p==='~')return c.home;
+  if(p[0]==='~')p=c.home+p.slice(1);
+  if(p[0]!=='/')p=c.cwd+'/'+p;
+  const parts=[];for(const s of p.split('/')){if(!s||s==='.')continue;if(s==='..')parts.pop();else parts.push(s)}
+  return '/'+parts.join('/');
+};
+const rootOnly=(c,p)=>!c.root&&c.kind==='remote'&&(c.host.rootOnly||[]).some(r=>p===r||p.startsWith(r+'/'));
+const entry=(c,p)=>c.fs[p];
+const content=e=>typeof e==='function'?e():(e&&typeof e==='object'&&!Array.isArray(e)?e.c:e);
+function metaLine(c,dir,name){
+  const p=(dir==='/'?'':dir)+'/'+name,e=entry(c,p),isDir=Array.isArray(e);
+  const m=(e&&e.m)||(isDir?'drwxr-xr-x':'-rw-r--r--'),o=(e&&e.o)||(c.kind==='local'?'student':c.user);
+  const sz=isDir?'4096':String((content(e)||'').length);
+  return `${m} 1 ${o.padEnd(8)} ${o.padEnd(8)} ${sz.padStart(5)} Mar  2 11:40 ${name}`;
+}
+const canRead=(c,e)=>{if(c.root||!e||typeof e!=='object'||Array.isArray(e)||!e.m)return true;const o=e.o||c.user;return o===c.user?e.m[1]==='r':e.m[7]==='r'};
+const canWrite=(c,e)=>{if(c.root||!e||typeof e!=='object'||Array.isArray(e)||!e.m)return true;const o=e.o||c.user;return o===c.user?e.m[2]==='w':e.m[8]==='w'};
+const canExec=(c,e)=>{if(!e||typeof e!=='object'||Array.isArray(e)||!e.m)return false;const o=e.o||c.user;return o===c.user?e.m[3]==='x':e.m[9]==='x'};
+const readOnlyPath=(c,p)=>!c.root&&(rootOnly(c,p)||(c.kind==='local'&&(LAB.local.readonly||[]).some(r=>p===r||p.startsWith(r+'/'))));
+const dirOf=p=>p.slice(0,p.lastIndexOf('/'))||'/',baseOf=p=>p.slice(p.lastIndexOf('/')+1);
+const setEntry=(c,p,v)=>{const d=dirOf(p),n=baseOf(p);c.fs[p]=v;if(!c.fs[d].includes(n))c.fs[d].push(n)};
+const delEntry=(c,p)=>{const d=dirOf(p),n=baseOf(p);delete c.fs[p];const a=c.fs[d];if(a)a.splice(a.indexOf(n),1);for(const k of Object.keys(c.fs))if(k.startsWith(p+'/'))delete c.fs[k]};
+function writeFile(file,text,append){
+  const c=T.ctx,p=resolvePath(file,c),d=dirOf(p),e=entry(c,p);
+  if(!Array.isArray(entry(c,d)))return tp('bash: '+file+': No such file or directory','err');
+  if(Array.isArray(e))return tp('bash: '+file+': Is a directory','err');
+  if(readOnlyPath(c,p)||!canWrite(c,e))return tp('bash: '+file+': Permission denied','err');
+  const old=e===undefined?'':content(e),nt=append&&old?old.replace(/\n$/,'')+'\n'+text:text;
+  setEntry(c,p,e&&typeof e==='object'?{...e,c:nt}:nt);
+}
+const globRx=g=>new RegExp('^'+g.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$');
+const modeStr=(n,dir)=>(dir?'d':'-')+[...n].map(d=>'rwx'.split('').map((ch,i)=>(+d&(4>>i))?ch:'-').join('')).join('');
+function dataCmd(line,tok,cmd){
+  const v=LAB.local.cmds[cmd];if(v===undefined)return false;
+  const args=tok.slice(1),full=args.join(' '),nf=args.filter(a=>!a.startsWith('-')),first=v.by&&nf.find(a=>v.by[a]!==undefined);
+  let out=typeof v==='string'?v:(v.by&&(v.by[full]!==undefined?v.by[full]:(first!==undefined?v.by[first]:undefined)));
+  if(out===undefined&&typeof v==='object')out=v.default;
+  tp(out===undefined?'(no output in this simulation)':out);return true;
+}
+function condOk(c,w){return (w||[]).every(x=>x.exists?entry(c,x.exists)!==undefined:x.missing?entry(c,x.missing)===undefined:x.mode?((entry(c,x.mode[0])||{}).m||'').slice(1)===x.mode[1]:x.has?String(content(entry(c,x.has[0]))||'').includes(x.has[1]):true)}
+function execFile(cmd){
+  const c=T.ctx,p=resolvePath(cmd,c),e=entry(c,p);
+  if(e===undefined||Array.isArray(e))return tp('bash: '+cmd+': No such file or directory','err');
+  if(!canExec(c,e))return tp('bash: '+cmd+': Permission denied','err');
+  const r=e.run;if(r===undefined)return tp('(it runs, but prints nothing)','dim');
+  if(typeof r==='string')return tp(r);
+  tp(condOk(c,r.when)?r.yes:r.no);
+}
+function shared(line,tok,cmd){
+  const c=T.ctx,args=tok.slice(1),paths=args.filter(a=>!a.startsWith('-')),flags=args.filter(a=>a.startsWith('-')).join('');
+  const last=paths[paths.length-1];
+  const text=a=>{const p=resolvePath(a,c),e=entry(c,p);
+    if(e===undefined||Array.isArray(e)){tp(cmd+': '+a+': No such file or directory','err');return null}
+    if(readOnlyPath(c,p)&&rootOnly(c,p)||!canRead(c,e)){tp(cmd+': '+a+': Permission denied','err');return null}
+    return content(e)};
+  switch(cmd){
+    case 'whoami':return tp(c.root?'root':c.user);
+    case 'pwd':return tp(c.cwd);
+    case 'echo':return tp(args.join(' ').replace(/^(["'])(.*)\1$/,'$2'));
+    case 'id':return tp(c.root?'uid=0(root) gid=0(root) groups=0(root)':`uid=1001(${c.user}) gid=1001(${c.user}) groups=1001(${c.user})`);
+    case 'hostname':return tp(c.name);
+    case 'date':return tp(LAB.local.date||'Mon Mar  2 11:40:02 UTC 2026');
+    case 'uname':return tp(/-a/.test(flags)?`Linux ${c.name} 5.15.0-91-generic #101-Ubuntu SMP x86_64 GNU/Linux`:'Linux');
+    case 'history':return tp(T.hist.map((h,i)=>String(i+1).padStart(4)+'  '+h).join('\n'));
+    case 'man':{const m=LAB.local&&LAB.local.man;return tp(m&&m[args[0]]?m[args[0]]:(args[0]?'No manual entry for '+args[0]:'What manual page do you want?'),m&&m[args[0]]?'':'err')}
+    case 'cd':{
+      const p=resolvePath(paths[0],c);
+      if(p==='/'){c.cwd='/';return}
+      if(!Array.isArray(entry(c,p)))return tp('bash: cd: '+(paths[0]||'')+': No such file or directory','err');
+      if(rootOnly(c,p))return tp('bash: cd: '+p+': Permission denied','err');
+      c.cwd=p;return}
+    case 'ls':{
+      const p=paths[0]?resolvePath(paths[0],c):c.cwd,e=entry(c,p),long=/l/.test(flags.replace(/-/g,'')),all=/a/.test(flags.replace(/-/g,''));
+      if(p==='/'&&c.kind==='remote')return tp((c.host.rootDirs||['bin','etc','home','opt','root','var']).join('  '));
+      if(e===undefined)return tp('ls: cannot access \''+(paths[0]||'')+'\': No such file or directory','err');
+      if(rootOnly(c,p))return tp('ls: cannot open directory \''+p+'\': Permission denied','err');
+      if(!Array.isArray(e))return tp(long?metaLine(c,dirOf(p),baseOf(p)):paths[0]);
+      const names=(all?['.','..',...e]:e.filter(n=>n[0]!=='.')).filter(n=>n!=='.'&&n!=='..'||all);
+      return tp(long?names.map(n=>n==='.'||n==='..'?`drwxr-xr-x 1 ${c.user.padEnd(8)} ${c.user.padEnd(8)}  4096 Mar  2 11:40 ${n}`:metaLine(c,p,n)).join('\n'):names.join('  '))}
+    case 'cat':{
+      if(!paths.length)return tp('cat: missing file','err');
+      for(const a of paths){
+        const p=resolvePath(a,c),e=entry(c,p);
+        if(e===undefined||Array.isArray(e))tp('cat: '+a+': '+(Array.isArray(e)?'Is a directory':'No such file or directory'),'err');
+        else if(rootOnly(c,p)||(e&&e.rootOnly&&!c.root)||!canRead(c,e))tp('cat: '+a+': Permission denied','err');
+        else tp(content(e));
+      }return}
+    case 'head':case 'tail':{
+      if(!last)return tp(cmd+': missing file','err');const t=text(last);if(t===null)return;
+      return tp(filterCmd(cmd+' '+args.slice(0,args.lastIndexOf(last)).join(' '),t))}
+    case 'wc':case 'sort':case 'uniq':case 'cut':{
+      if(!last)return tp(cmd+': missing file','err');const t=text(last);if(t===null)return;
+      const o=filterCmd(cmd+' '+args.slice(0,args.lastIndexOf(last)).join(' '),t);return tp(cmd==='wc'&&/-l/.test(flags)?o+' '+last:o)}
+    case 'grep':{
+      const rest=paths;if(rest.length<2)return tp('Usage: grep [-i] [-c] [-n] [-r] <text> <file>   (or: cat <file> | grep <text>)','err');
+      const file=rest[rest.length-1],p=resolvePath(file,c),e=entry(c,p),pre=args.slice(0,args.lastIndexOf(file)).join(' ');
+      if(e===undefined)return tp('grep: '+file+': No such file or directory','err');
+      if(rootOnly(c,p)||!canRead(c,e))return tp('grep: '+file+': Permission denied','err');
+      if(Array.isArray(e)){
+        if(!/r/i.test(flags.replace(/-/g,'').replace(/[inc]/g,'')))return tp('grep: '+file+': Is a directory','err');
+        const out=[];Object.keys(c.fs).filter(k=>k.startsWith((p==='/'?'':p)+'/')&&!Array.isArray(c.fs[k])).sort().forEach(k=>{
+          if(rootOnly(c,k)||!canRead(c,c.fs[k]))return;const o=filterCmd('grep '+pre.replace(/(^|\s)(-\w*r\w*)/,(m,sp,f)=>sp+f.replace('r','')).replace(/(^|\s)-(?=\s|$)/g,' '),content(c.fs[k]));
+          if(o!=='')o.split('\n').forEach(l=>out.push(k+':'+l))});
+        return out.length&&tp(out.join('\n'))}
+      const out=filterCmd('grep '+pre,content(e));return out!==''&&tp(out)}
+    case 'find':{
+      if(args.includes('-exec'))return tp('(find -exec is not available in this simulation)','dim');
+      const ni=args.indexOf('-name'),ti=args.indexOf('-type'),pat=ni>=0?(args[ni+1]||'').replace(/^["']|["']$/g,''):null,ty=ti>=0?args[ti+1]:null;
+      const start=args[0]&&!args[0].startsWith('-')?args[0]:'.',base=resolvePath(start,c);
+      if(entry(c,base)===undefined)return tp("find: '"+start+"': No such file or directory",'err');
+      const shown=start.replace(/\/$/,'')||'/',rx=pat&&globRx(pat),out=[];
+      Object.keys(c.fs).filter(k=>k===base||k.startsWith((base==='/'?'':base)+'/')).sort().forEach(k=>{
+        if(rootOnly(c,k))return;const isD=Array.isArray(c.fs[k]);
+        if(ty==='f'&&isD||ty==='d'&&!isD)return;if(rx&&!rx.test(baseOf(k)))return;
+        out.push(shown+(k===base?'':(base==='/'?'':'')+k.slice(base==='/'?0:base.length)))});
+      return out.length&&tp(out.join('\n'))}
+    case 'mkdir':{
+      if(!paths.length)return tp('mkdir: missing operand','err');
+      for(const a of paths){const p=resolvePath(a,c);
+        if(entry(c,p)!==undefined){if(!/p/.test(flags))tp("mkdir: cannot create directory '"+a+"': File exists",'err');continue}
+        if(readOnlyPath(c,p)||(entry(c,dirOf(p))===undefined&&!/p/.test(flags))){tp("mkdir: cannot create directory '"+a+"': "+(entry(c,dirOf(p))===undefined?'No such file or directory':'Permission denied'),'err');continue}
+        const parts=p.split('/').filter(Boolean);let cur='';for(const s of parts){cur+='/'+s;if(entry(c,cur)===undefined)setEntry(c,cur,[])}}
+      return}
+    case 'touch':{
+      if(!paths.length)return tp('touch: missing file operand','err');
+      for(const a of paths){const p=resolvePath(a,c);if(entry(c,p)!==undefined)continue;
+        if(entry(c,dirOf(p))===undefined)tp("touch: cannot touch '"+a+"': No such file or directory",'err');
+        else if(readOnlyPath(c,p))tp("touch: cannot touch '"+a+"': Permission denied",'err');else setEntry(c,p,'')}
+      return}
+    case 'rm':{
+      if(!paths.length)return tp('rm: missing operand','err');
+      for(const a of paths){const p=resolvePath(a,c),e=entry(c,p);
+        if(e===undefined){if(!/f/.test(flags))tp("rm: cannot remove '"+a+"': No such file or directory",'err');continue}
+        if(readOnlyPath(c,p)||(LAB.local&&c.kind==='local'&&(LAB.local.protect||[]).includes(p))){tp("rm: cannot remove '"+a+"': Permission denied",'err');continue}
+        if(Array.isArray(e)&&!/r/i.test(flags)){tp("rm: cannot remove '"+a+"': Is a directory",'err');continue}
+        delEntry(c,p)}
+      return}
+    case 'cp':case 'mv':{
+      if(paths.length<2)return tp(cmd+': missing destination file operand after \''+(paths[0]||'')+'\'','err');
+      const dst=paths[paths.length-1],srcs=paths.slice(0,-1);
+      for(const a of srcs){
+        const sp=resolvePath(a,c),se=entry(c,sp);
+        if(se===undefined){tp(cmd+": cannot stat '"+a+"': No such file or directory",'err');continue}
+        if(Array.isArray(se)){tp(cmd==='cp'?"cp: -r not specified; omitting directory '"+a+"'":'mv: moving directories is not supported in this simulation','err');continue}
+        if(!canRead(c,se)||readOnlyPath(c,sp)&&cmd==='mv'){tp(cmd+": cannot open '"+a+"' for reading: Permission denied",'err');continue}
+        let dp=resolvePath(dst,c);if(Array.isArray(entry(c,dp)))dp=(dp==='/'?'':dp)+'/'+baseOf(sp);
+        if(entry(c,dirOf(dp))===undefined){tp(cmd+": cannot create regular file '"+dst+"': No such file or directory",'err');continue}
+        if(readOnlyPath(c,dp)){tp(cmd+": cannot create regular file '"+dst+"': Permission denied",'err');continue}
+        setEntry(c,dp,se&&typeof se==='object'?{...se}:se);if(cmd==='mv')delEntry(c,sp)}
+      return}
+    case 'chmod':{
+      if(paths.length<2)return tp('chmod: missing operand','err');
+      const mode=paths[0];
+      for(const a of paths.slice(1)){const p=resolvePath(a,c),e=entry(c,p);
+        if(e===undefined){tp("chmod: cannot access '"+a+"': No such file or directory",'err');continue}
+        const isD=Array.isArray(e),cur=(!isD&&e&&e.m)||(isD?'drwxr-xr-x':'-rw-r--r--');
+        if(!c.root&&((!isD&&e&&e.o)||c.user)!==c.user){tp("chmod: changing permissions of '"+a+"': Operation not permitted",'err');continue}
+        let nm;
+        if(/^[0-7]{3}$/.test(mode))nm=modeStr(mode,isD);
+        else{const m=mode.match(/^([ugoa]*)([-+=])([rwx]+)$/);if(!m){tp("chmod: invalid mode: '"+mode+"'",'err');return}
+          const who=m[1]===''||m[1]==='a'?'ugo':m[1];const ch=cur.split('');
+          for(const w of who)for(const r of m[3]){const idx={u:1,g:4,o:7}[w]+'rwx'.indexOf(r);ch[idx]=m[2]==='-'?'-':r}
+          nm=ch.join('')}
+        if(isD)c.fs[p]=Object.assign(e,{m:nm});else setEntry(c,p,{...(typeof e==='object'?e:{c:e}),m:nm})}
+      return}
+    case 'exit':case 'logout':
+      if(c.kind==='local')return tp('There is nowhere to go. Close the tab if you really want to leave. 😉','dim');
+      if(c.root){c.root=false;return tp('(back to '+c.user+')','dim')}
+      T.ctx=T.stack.pop();tp('Connection to '+c.ip+' closed.','dim');return;
+    case 'sudo':if(c.kind==='local')return tp(c.user+' is not in the sudoers file. This incident will be reported. (Just kidding. Nothing is reported. Nothing here is real.)','err');
+    default:
+      if(/^\.?\.?\//.test(cmd)&&c.kind==='local'&&LAB.local.tree)return execFile(cmd);
+      tp(cmd+': command not found (type "help")','err');
+  }
+}
+
+/* ---- your machine ---- */
+function scopeWarn(ip){const h=LAB.hosts[ip];if(h&&h.outOfScope)tp('⚠ '+ip+' ('+h.name+') is NOT on your scope list. In a real test you must stop here and ask the client. (Output shown for training only.)','err')}
+const ipOf=a=>(a.match(/\b\d+\.\d+\.\d+\.\d+(?:\/\d+)?\b/)||[])[0];
+function localOnly(line,tok,cmd){
+  const args=tok.slice(1);
+  switch(cmd){
+    case 'nmap':{
+      const tgt=ipOf(args.join(' '));
+      if(!tgt){tp('Usage: nmap [-sn | -p- | -sV] <ip or range>','err');return true}
+      if(tgt.includes('/')){
+        if(tgt!==LAB.range){tp('Note: only the training range '+LAB.range+' exists here. Stick to what scope.txt allows.','err');return true}
+        if(!args.includes('-sn')){tp('That would scan a whole range. Try a ping sweep first: nmap -sn '+LAB.range,'err');return true}
+        const ups=Object.entries(LAB.hosts);
+        tp('Starting Nmap 7.94 ( https://nmap.org )\n'+ups.map(([ip,h],i)=>`Nmap scan report for ${h.name} (${ip})\nHost is up (0.00${2+i}s latency).`).join('\n')+`\nNmap done: 256 IP addresses (${ups.length} hosts up) scanned in 2.31 seconds`);return true}
+      const h=LAB.hosts[tgt];scopeWarn(tgt);
+      if(!h){tp('Note: Host seems down. Is '+tgt+' in scope? Check scope.txt.','err');return true}
+      const full=args.includes('-p-'),sv=args.includes('-sV');
+      const ports=Object.entries(h.ports).filter(([p,d])=>full||!d.hidden).sort((a,b)=>a[0]-b[0]);
+      tp(`Starting Nmap 7.94 ( https://nmap.org )
+Nmap scan report for ${h.name} (${tgt})
+Host is up (0.0021s latency).
+${full?'All 65535 ports scanned.':'Not shown: 996 closed tcp ports (default scan covers the 1000 most common ports only)'}
+PORT      STATE SERVICE${sv?'  VERSION':''}
+${ports.map(([p,d])=>(p+'/tcp').padEnd(10)+'open  '+d.svc.padEnd(8)+(sv?' '+d.ver:'')).join('\n')}
+
+Nmap done: 1 IP address (1 host up) scanned in ${full?'14.02':'1.84'} seconds`);return true}
+    case 'nc':{
+      scopeWarn(args[0]);const h=LAB.hosts[args[0]];if(!h){tp('nc: connect to '+(args[0]||'?')+' failed (No route to host)','err');return true}
+      const d=h.ports[args[1]];
+      if(d&&d.banner)tp(d.banner);else if(d)tp('(connected – nothing sent. Try the proper client instead.)','dim');
+      else tp('nc: connect to '+args[0]+' port '+args[1]+' (tcp) failed: Connection refused','err');
+      return true}
+    case 'curl':{
+      const ui0=args.indexOf('-u'),credTok=ui0>=0?args[ui0+1]:null;
+      const url=args.find(a=>!a.startsWith('-')&&a!==credTok);
+      const m=(url||'').replace(/^https?:\/\//,'').match(/^([^\/]+)(\/.*)?$/);
+      if(!m){tp('curl: try \'curl http://<ip>/\'','err');return true}
+      scopeWarn(m&&m[1]);const h=LAB.hosts[m[1]];if(!h||!h.web){tp('curl: (6) Could not resolve host / connect: '+m[1],'err');return true}
+      let path=(m[2]||'/').split('?')[0];if(path.length>1)path=path.replace(/\/+$/,'');
+      const ui=args.indexOf('-u'),creds=ui>=0?args[ui+1]:null,gate=h.auth&&h.auth[path];
+      if(gate&&creds!==gate.user+':'+gate.pass){tp('HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Basic realm="'+gate.realm+'"\n(this page wants a username and password – use -u user:pass)');return true}
+      const r=h.web[path];tp(r!==undefined?(typeof r==='function'?r():r):'<html><head><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');return true}
+    case 'dirb':{
+      const ip=ipOf(args.join(' ')),h=LAB.hosts[ip];
+      if(!h||!h.dirs){tp('Usage: dirb http://<ip>/','err');return true}
+      tp(`-----------------\nDIRB v2.22\nURL_BASE: http://${ip}/\nWORDLIST_FILES: common.txt\n-----------------\n${h.dirs.join('\n')}\n-----------------\nDOWNLOADED: 4612 - FOUND: ${h.dirs.length}`);return true}
+    case 'ftp':{
+      const ip=args[0],h=LAB.hosts[ip];
+      if(!h||!h.ftp){tp('ftp: connect: '+(h?'Connection refused':'No route to host'),'err');return true}
+      tp('Connected to '+ip+'.\n220 '+h.ftp.banner);
+      T.pending={label:'Name ('+ip+':student):',cb:u=>{
+        if(/^(anonymous|ftp)$/i.test(u)&&h.ftp.anon){T.pending={label:'Password:',secret:true,cb:()=>{tp('230 Login successful.\nRemote system type is UNIX. Type "ls" to list, "get <file>" to download, "quit" to leave.');T.mode='ftp';T.ftp=h;setPrompt()}}}
+        else{T.pending={label:'Password:',secret:true,cb:()=>tp('530 Login incorrect.','err')}}
+      }};return true}
+    case 'ssh':{
+      const m=(args[0]||'').match(/^(\w+)@(.+)$/);
+      if(!m){tp('Usage: ssh user@<ip>','err');return true}
+      const h=LAB.hosts[m[2]];if(!h||!h.users){tp('ssh: connect to host '+m[2]+' port 22: '+(h?'Connection refused':'No route to host'),'err');return true}
+      T.pending={label:m[1]+'@'+m[2]+"'s password:",secret:true,cb:pw=>{
+        const u=h.users[m[1]];
+        if(u&&u.pw===pw){T.stack.push(T.ctx);T.ctx=mkRemote(m[2],m[1]);tp(h.motd||'Welcome. Type "help" for the commands available in this simulated shell.','sys')}
+        else tp('Permission denied, please try again.','err');
+      }};return true}
+  }
+  return false;
+}
+function ftpCmd(line){
+  const tok=line.split(/\s+/),h=T.ftp,files=h.ftp.files;
+  switch(tok[0]){
+    case 'ls':case 'dir':tp('227 Entering Passive Mode.\n'+Object.keys(files).map(n=>'-rw-r--r--   1 ftp   ftp   '+String(files[n].length).padStart(5)+' Mar  2 09:15 '+n).join('\n')+'\n226 Directory send OK.');break;
+    case 'get':{const f=tok[1];if(!files[f]){tp('550 Failed to open file.','err');break}
+      const L=T.stack.length?T.stack[0]:T.ctx;const loc=(T.ctx.kind==='local'?T.ctx:L);
+      loc.fs['/home/student/'+f]=files[f];if(!loc.fs['/home/student'].includes(f))loc.fs['/home/student'].push(f);
+      tp('226 Transfer complete. Saved to your home folder – read it with: cat '+f);break}
+    case 'quit':case 'bye':case 'exit':T.mode=null;T.ftp=null;tp('221 Goodbye.');break;
+    default:tp('?Invalid command. Try: ls, get <file>, quit','err');
+  }
+}
+
+/* ---- on a target ---- */
+function sudoRules(c){return (c.host.users[c.user].sudo)||[]}
+function remoteOnly(line,tok,cmd){
+  const c=T.ctx;
+  if(cmd!=='sudo')return false;
+  const rules=sudoRules(c);
+  if(/^sudo\s+-l$/.test(line)){
+    tp(rules.length?`Matching Defaults entries for ${c.user} on ${c.name}:\n    env_reset, mail_badpass\n\nUser ${c.user} may run the following commands on ${c.name}:\n${rules.map(r=>'    (root) NOPASSWD: '+r).join('\n')}`:`Sorry, user ${c.user} may not run sudo on ${c.name}.`);return true}
+  const bin=tok[1],rule=rules.find(r=>r===bin||r.endsWith('/'+bin));
+  if(!rule){tp(`Sorry, user ${c.user} is not allowed to execute '${tok.slice(1).join(' ')}' as root on ${c.name}.`,'err');return true}
+  if(/find$/.test(rule)){
+    const m=line.match(/-exec\s+(.+?)\s*(?:\{\}\s*)?(?:\\;|';'|";"|;|\+)\s*(?:-quit)?\s*$/);
+    if(!m){tp('(find: try running a command on each file it finds: -exec <command> \\; )','dim');return true}
+    const inner=m[1].replace(/\{\}/g,'').trim();
+    if(/^(\/bin\/)?(sh|bash)$/.test(inner)){c.root=true;tp('(find ran a shell as root)','sys');return true}
+    const was=c.root;c.root=true;try{runCmd(inner)}finally{c.root=was}return true}
+  tp('(this simulation does not run that program)','dim');return true;
+}
+
+boot();
+</script>
+</body>
+</html>
